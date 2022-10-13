@@ -117,11 +117,14 @@ CBArecModel_ModObj          = CBAreceiver_RecObj.Model
 CBArecModel_SModObj         = CBArecModel_ModObj.QueryInterface(STKObjects.IAgReceiverModelSimple)
 CBArecModel_SModObj.AutoSelectDemodulator = False  
 CBArecModel_SModObj.SetDemodulator(Dem) 
+CBArecModel_SModObj.GOverT  = 24.83 #dB/K 
+
 # POLAR'S RECEPTOR    
 POLARrecModel_ModObj        = POLARreceiver_RecObj.Model
 POLARrecModel_SModObj       = POLARrecModel_ModObj.QueryInterface(STKObjects.IAgReceiverModelSimple)
 POLARrecModel_SModObj.AutoSelectDemodulator = False  
 POLARrecModel_SModObj.SetDemodulator(Dem)  
+POLARrecModel_SModObj.GOverT = 24.83 #dB/K 
 
 ######################################
 ##    Task 5
@@ -171,6 +174,8 @@ CBAtxModel_CmxModObj.Frequency = 2.255  # GHz
 CBAtxModel_CmxModObj.Power  = -14  # dBW
 CBAtxModel_CmxModObj.DataRate = 5  # Mb/sec
 CBAtxModel_CmxModObj.AntennaControl.SetEmbeddedModel('Bessel Aperture Circular')
+#Falta configurar la parte de Model Specs
+CBAtxModel_CmxModObj.Modulator.Bandwidth = 2.0000 #MHz
 
 #Modifico masa a satellite
 #'Value 0 kg is invalid. Value range is 0.00100000 kg to 1000000000.00000000 kg'
@@ -214,65 +219,3 @@ rptElements       = ['Modulation Type', 'Gain']
 transmitterDPElements = transmitterDP2.ExecElements(rptElements)
 transmitterModulation = transmitterDPElements.DataSets.GetDataSetByName('Modulation Type').GetValues()
 print(transmitterModulation)
-
-
-
-
-## Modify Receiver System Noise Temperature
-#recModel = receiver2.Model
-#receiver2.SetModel(CbaReciverType)
-##recModel.SystemNoiseTemperature.ConstantNoiseTemperature = 20  # K
-
-
-######################################
-##    Task 4
-##    1. Add a satellite to the scenario
-#satellite = root.CurrentScenario.Children.New(18, SatelliteName)  # eSatellite
-#satellite2 = satellite.QueryInterface(STKObjects.IAgSatellite)
-
-##Set satellite propagator to SGP4 and propagate
-#satellite2.SetPropagatorType(4)  # ePropagatorSGP4
-#propagator = satellite2.Propagator
-#propagator.EphemerisInterval.SetImplicitInterval(root.CurrentScenario.Vgt.EventIntervals.Item("AnalysisInterval")  # Link to scenario period
-#propagator.CommonTasks.AddSegsFromOnlineSource = '25544'  # International Space Station
-#propagator.AutoUpdateEnabled = True
-#propagator.Propagate()
-
-
-
-#groundStation3 = root.CurrentScenario.Children.New(8, 'PolarBs')
-#groundStation4 = groundStation3.QueryInterface(STKObjects.IAgFacility)
-#root.UnitPreferences.Item('LatitudeUnit').SetCurrentUnit('deg')
-#root.UnitPreferences.Item('LongitudeUnit').SetCurrentUnit('deg')
-#groundStation4.Position.AssignGeodetic(-90, -90, 0)
-
-###    2. Add a Receptor object to the facility
-
-#receiver3    = groundStation3.Children.New(17, 'Receiver3')  # eReceiver
-#receiver4    = receiver3.QueryInterface(STKObjects.IAgReceiver)
-
-## Modify Receiver System Noise Temperature
-#receiver4.SetModel("Simple Receiver Model")
-#recModel2 = receiver4.Model
-##recModel.SystemNoiseTemperature.ConstantNoiseTemperature = 20  # K
-
-
-## Modify Receiver Demodulator Properties
-#recModel2.AutoSelectDemodulator = False
-#recModel2.SetDemodulator = Dem 
-
-######################################
-##    Task 4
-##    1. Add a satellite to the scenario
-#satellite = root.CurrentScenario.Children.New(18, SatelliteName)  # eSatellite
-#satellite2 = satellite.QueryInterface(STKObjects.IAgSatellite)
-
-##Set satellite propagator to SGP4 and propagate
-#satellite2.SetPropagatorType(4)  # ePropagatorSGP4
-#propagator = satellite2.Propagator
-#propagator.EphemerisInterval.SetImplicitInterval(
-#    root.CurrentScenario.Vgt.EventIntervals.Item("AnalysisInterval"))  # Link to scenario period
-#propagator.CommonTasks.AddSegsFromOnlineSource('25544')  # International Space Station
-#propagator.AutoUpdateEnabled = True
-#propagator.Propagate()
-
