@@ -151,15 +151,24 @@ CBAattitude_BasicObj        = CBAattitude_OrAtStObj.Basic
 CBAattitude_BasicObj.SetProfileType(6)
 CBAattitude_ProfObj         = CBAattitude_BasicObj.Profile
 CBAattitude_FIAObj          = CBAattitude_ProfObj.QueryInterface(STKObjects.IAgVeProfileFixedInAxes)
-#basic6 = satellite2.Attitude.QueryInterface(STKObjects.IAgVeAttitudeRealTime)
-#basic6.AddYPR('YPR',0,60,0)
-## !! FALTA CAMBIAR LOS VALORES DE YAW Y ROLL(AddYPR) <------------------------
+CBAattitude_OrintObj = CBAattitude_FIAObj.Orientation
+CBAattitude_OrintObj.AssignYPRAngles(4,-180,0,-90) #YPR sequence.
 
-#basic5.Body.AssignXYZ(0, 0, 1)
-#basic5.Inertial.AssignXYZ(0, 1, 0)
-#basic5.Rate = 6
 
-##    4. Add a Transmiter object to the satellite
+##    2. Add and Set the antenna object
+SAOCOMantenna_STKObj        = SAOCOMsatellite_STKObj.Children.New(31, 'SAOCOMantenna')  # eAntenna
+SAOCOMantenna_AntObj        = SAOCOMantenna_STKObj.QueryInterface(STKObjects.IAgAntenna)
+SAOCOMantenna_AntObj.SetModel('Bessel Aperture Circular')
+SAOCOMantenna_AntModObj     = SAOCOMantenna_AntObj.Model
+SAOCOMantenna_AntSCBObj     = SAOCOMantenna_AntModObj.QueryInterface(STKObjects.IAgAntennaModelApertureCircularBessel)
+SAOCOMantenna_AntSCBObj.Diameter = 0.5 #m
+SAOCOMantenna_AntSCBObj.ComputeMainlobeGain = False
+SAOCOMantenna_AntModObj.DesignFrequency = 2.255 #GHz la f que pongo acá es la misma que va en la linea 183
+SAOCOMantenna_OrintObj = SAOCOMantenna_AntObj.Orientation
+SAOCOMantenna_OrintObj.AssignAzEl(0, 0, 1)  # 1 represents Rotate About Boresight
+#'Value 0° = '
+
+##    3. Add a Transmiter object to the satellite
 CBAtransmitter_STKObj       = SAOCOMsatellite_STKObj.Children.New(24, TransmitterName)  # eTransmitter
 CBAtransmitter_TraObj       = CBAtransmitter_STKObj.QueryInterface(STKObjects.IAgTransmitter)
 
@@ -173,9 +182,9 @@ CBAtxModel_CmxModObj.Modulator.AutoScaleBandwidth = True
 CBAtxModel_CmxModObj.Frequency = 2.255  # GHz
 CBAtxModel_CmxModObj.Power  = -14  # dBW
 CBAtxModel_CmxModObj.DataRate = 5  # Mb/sec
-CBAtxModel_CmxModObj.AntennaControl.SetEmbeddedModel('Bessel Aperture Circular')
-#Falta configurar la parte de Model Specs
-CBAtxModel_CmxModObj.Modulator.Bandwidth = 2.0000 #MHz
+CBAtxModel_CmxModObj.AntennaControl.ReferenceType = 0  #Link to an Antenna object
+CBAtxModel_CmxModObj.AntennaControl.LinkedAntennaObject
+
 
 #Modifico masa a satellite
 #'Value 0 kg is invalid. Value range is 0.00100000 kg to 1000000000.00000000 kg'
@@ -183,7 +192,7 @@ SAOCOMmass                  = SAOCOMsatellite_SatObj.MassProperties
 SAOCOMmass.Mass             = 0.00100000
 
 ######################################
-##    Task 4
+##    Task 6
 ##    1. Retrive and view the access data in Phyton
 
 # You now have a scenario with a Target object and a Satelite object. Determine when the Satelite object ...
@@ -203,8 +212,8 @@ accessStopTime  = results.DataSets.GetDataSetByName('Stop Time').GetValues()
 print(accessStartTime, accessStopTime)
 
 ######################################
-##    Task 5
-##    2. Retrive and view the altitud of the satellite during an access interval.
+##    Task 7
+##    1. Retrive and view the altitud of the satellite during an access interval.
 
 receiverDP       = CBAreceiver_STKObj.DataProviders.Item('Basic Properties')
 receiverDP2      = receiverDP.QueryInterface(STKObjects.IAgDataPrvFixed)
