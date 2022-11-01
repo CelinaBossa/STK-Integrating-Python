@@ -2,8 +2,8 @@
 
 #   Scenrio Properties
 ScenarioName  = 'Paper'
-InicialTime   =  '01 Sep 2022 12:00:00.000'
-FinalTime     = '+5 days'
+InicialTime   =  '05 Jul 2022 00:00:00.000'
+FinalTime     = '23 Jul 2022 00:00:00.000'
 StepTime      = 8
 
 #   Ground Starion Properties
@@ -29,7 +29,7 @@ TransmitterName = 'Transmitter2'
 SatelliteName = 'Saocom-1-B-Julio'
 
 #Demodulation
-Dem = '8PSK'
+Dem = '16PSK'
 
 #   Antenna Properties
 XantPosition  = 50
@@ -140,8 +140,11 @@ CBApropagator_PropObj       = SAOCOMsatellite_SatObj.Propagator
 CBApropagator_SGP4Obj       = CBApropagator_PropObj.QueryInterface(STKObjects.IAgVePropagatorSGP4)
 CBApropagator_SGP4Obj.EphemerisInterval.SetImplicitInterval(root.CurrentScenario.Vgt.EventIntervals.Item("AnalysisInterval"))  # Link to scenario period
 CBApropagator_SGP4Obj.Step  = StepTime
+CBApropagator_SGP4AutoU = CBApropagator_SGP4Obj.AutoUpdate
+CBApropagator_SGP4AutoU.SelectedSource = 3
+#
+#CBApropagator_SGP4AutoU.FileSource.Filename('SAOCOM-1B.tle')
 CBApropagator_SGP4Obj.CommonTasks.AddSegsFromOnlineSource('46265')  # Cambiar a TLE
-CBApropagator_SGP4Obj.AutoUpdateEnabled = True
 CBApropagator_SGP4Obj.Propagate()
 
 #Set satellite attitude basic spinning ## me lo va a dar el TLE
@@ -164,9 +167,9 @@ SAOCOMantenna_AntSCBObj     = SAOCOMantenna_AntModObj.QueryInterface(STKObjects.
 SAOCOMantenna_AntSCBObj.Diameter = 0.5 #m
 SAOCOMantenna_AntSCBObj.ComputeMainlobeGain = False
 SAOCOMantenna_AntModObj.DesignFrequency = 2.255 #GHz la f que pongo acá es la misma que va en la linea 183
-SAOCOMantenna_OrintObj = SAOCOMantenna_AntObj.Orientation
+SAOCOMantenna_OrintObj      = SAOCOMantenna_AntObj.Orientation
 SAOCOMantenna_OrintObj.AssignAzEl(0, 0, 1)  # 1 represents Rotate About Boresight
-#'Value 0° = '
+#'Value 0° = 1.27222e-14 °'
 
 ##    3. Add a Transmiter object to the satellite
 CBAtransmitter_STKObj       = SAOCOMsatellite_STKObj.Children.New(24, TransmitterName)  # eTransmitter
@@ -205,7 +208,7 @@ SAOCOMmass.Mass             = 0.00100000
 access = CBAreceiver_STKObj.GetAccessToObject(CBAtransmitter_STKObj)
 access.ComputeAccess()
 accessDP        = access.DataProviders.Item('Access Data')
-accessDP2       = accessDP.QueryInterface(STKObjects.IAgDataPrvInterval)
+accessDP2       = accessDP.QueryInterface(STKObjects.IAgDataPrveIntrval)
 results         = accessDP2.Exec(scenario_ScenObj.StartTime, scenario_ScenObj.StopTime)
 accessStartTime = results.DataSets.GetDataSetByName('Start Time').GetValues()
 accessStopTime  = results.DataSets.GetDataSetByName('Stop Time').GetValues()
@@ -215,16 +218,69 @@ print(accessStartTime, accessStopTime)
 ##    Task 7
 ##    1. Retrive and view the altitud of the satellite during an access interval.
 
-receiverDP       = CBAreceiver_STKObj.DataProviders.Item('Basic Properties')
-receiverDP2      = receiverDP.QueryInterface(STKObjects.IAgDataPrvFixed)
-rptElements       = ['Cable Receiver - BER', 'Gain']
-receiverDPElements = receiverDP2.ExecElements(rptElements)
-receiverModulation = receiverDPElements.DataSets.GetDataSetByName('Cable Receiver - BER').GetValues()
-print(receiverModulation)
+##Data provider de AER Data -> Default -> Azimuth - Elevation - Range
+AERdata                 = access.DataProviders.Item('AER Data')
+AERdata_GroupObj        = AERdata.QueryInterface(STKObjects.IAgDataProviderGroup)
+AERdata_DataObj         = AERdata_GroupObj.Group
+AERdata_Default         = AERdata_DataObj.Item('Default')
+AERdata_TimeVar         = AERdata_Default.QueryInterface(STKObjects.IAgDataPrvTimeVar)
+AERdata_elements        = ['Azimuth', 'Elevation', 'Range']
+AERdata_results         = AERdata_TimeVar.ExecElements(scenario_ScenObj.StartTime,scenario_ScenObj.StopTime,StepTime,AERdata_elements)
+accessAzimuth           = AERdata_results.DataSets.GetDataSetByName('Azimuth').GetValues()
+accessElevation         = AERdata_results.DataSets.GetDataSetByName('Elevation').GetValues()
+accessRange             = AERdata_results.DataSets.GetDataSetByName('Range').GetValues()
 
-transmitterDP       = CBAtransmitter_STKObj.DataProviders.Item('Basic Properties')
-transmitterDP2      = transmitterDP.QueryInterface(STKObjects.IAgDataPrvFixed)
-rptElements       = ['Modulation Type', 'Gain']
-transmitterDPElements = transmitterDP2.ExecElements(rptElements)
-transmitterModulation = transmitterDPElements.DataSets.GetDataSetByName('Modulation Type').GetValues()
-print(transmitterModulation)
+##Data provider de To Position Velocity -> ICRF -> x - y - z - xVel - yVel - zVel - RelSpeed
+ToPositionVel           = access.DataProviders.Item('To Position Velocity')
+ToPositionVel_GroupObj  = ToPositionVel.QueryInterface(STKObjects.IAgDataProviderGroup)
+ToPositionVel_DataObj   = ToPositionVel_GroupObj.Group
+ToPositionVel_ICRF      = ToPositionVel_DataObj.Item('ICRF')
+ToPositionVel_TimeVar   = ToPositionVel_ICRF.QueryInterface(STKObjects.IAgDataPrvTimeVar)
+ToPositionVel_elements  = ['x', 'y', 'z', 'xVel', 'yVel', 'zVel', 'RelSpeed']
+ToPositionVel_results   = ToPositionVel_TimeVar.ExecElements(scenario_ScenObj.StartTime,scenario_ScenObj.StopTime,StepTime,ToPositionVel_elements)
+accessX                 = ToPositionVel_results.DataSets.GetDataSetByName('x').GetValues()
+accessY                 = ToPositionVel_results.DataSets.GetDataSetByName('y').GetValues()
+accessZ                 = ToPositionVel_results.DataSets.GetDataSetByName('z').GetValues()
+accessXVel              = ToPositionVel_results.DataSets.GetDataSetByName('xVel').GetValues()
+accessYVel              = ToPositionVel_results.DataSets.GetDataSetByName('yVel').GetValues()
+accessZVel              = ToPositionVel_results.DataSets.GetDataSetByName('zVel').GetValues()
+accessRelSpeed          = ToPositionVel_results.DataSets.GetDataSetByName('RelSpeed').GetValues()
+
+##Data provider de Link Information -> Prop Loss - EIRP - Rcvd. Frequency - Freq. Doppler Shift -
+#                                       - Bandwidth Overlap - Rcvd. Iso. Power - Flux Density -
+#                                       - g/T - C/No - Bandwidth - C/N - Spectral Flux Density -
+#                                       - Eb/No - BER
+LinkInfo                = access.DataProviders.Item('Link Information')
+LinkInfo_TimeVar        = LinkInfo.QueryInterface(STKObjects.IAgDataPrvTimeVar)
+LinkInfo_elements       = ['Prop Loss', 'EIRP', 'Rcvd. Frequency', 'Freq. Doppler Shift', 'Bandwidth Overlap','Rcvd. Iso. Power', 'Flux Density', 'g/T', 'C/No', 'Bandwidth', 'C/N', 'Spectral Flux Density', 'Eb/No','BER']
+LinkInfo_results        = LinkInfo_TimeVar.ExecElements(scenario_ScenObj.StartTime,scenario_ScenObj.StopTime,StepTime,LinkInfo_elements)
+accessPropLoss          = LinkInfo_results.DataSets.GetDataSetByName('Prop Loss').GetValues()
+accessEIRP              = LinkInfo_results.DataSets.GetDataSetByName('EIRP').GetValues()
+accessRcvdFrequency     = LinkInfo_results.DataSets.GetDataSetByName('Rcvd. Frequency').GetValues()
+accessFreqDopplerShift  = LinkInfo_results.DataSets.GetDataSetByName('Freq. Doppler Shift').GetValues()
+accessBandwidthOverlap  = LinkInfo_results.DataSets.GetDataSetByName('Bandwidth Overlap').GetValues()
+accessRcvdIsoPower      = LinkInfo_results.DataSets.GetDataSetByName('Rcvd. Iso. Power').GetValues()
+accessFluxDensity       = LinkInfo_results.DataSets.GetDataSetByName('Flux Density').GetValues()
+accessgT                = LinkInfo_results.DataSets.GetDataSetByName('g/T').GetValues()
+accessCNo               = LinkInfo_results.DataSets.GetDataSetByName('C/No').GetValues()
+accessBandwidth         = LinkInfo_results.DataSets.GetDataSetByName('Bandwidth').GetValues()
+accessCN                = LinkInfo_results.DataSets.GetDataSetByName('C/N').GetValues()
+accessSpectralFluxDensity = LinkInfo_results.DataSets.GetDataSetByName('Spectral Flux Density').GetValues()
+accessEbNo              = LinkInfo_results.DataSets.GetDataSetByName('Eb/No').GetValues()
+accessBER               = LinkInfo_results.DataSets.GetDataSetByName('BER').GetValues()
+
+
+
+#receiverDP       = CBAreceiver_STKObj.DataProviders.Item('Basic Properties')
+#receiverDP2      = receiverDP.QueryInterface(STKObjects.IAgDataPrvFixed)
+#rptElements       = ['Cable Receiver - BER', 'Gain']
+#receiverDPElements = receiverDP2.ExecElements(rptElements)
+#receiverModulation = receiverDPElements.DataSets.GetDataSetByName('Cable Receiver - BER').GetValues()
+#print(receiverModulation)
+#
+#transmitterDP       = CBAtransmitter_STKObj.DataProviders.Item('Basic Properties')
+#transmitterDP2      = transmitterDP.QueryInterface(STKObjects.IAgDataPrvFixed)
+#rptElements       = ['Modulation Type', 'Gain']
+#transmitterDPElements = transmitterDP2.ExecElements(rptElements)
+#transmitterModulation = transmitterDPElements.DataSets.GetDataSetByName('Modulation Type').GetValues()
+#print(transmitterModulation)
