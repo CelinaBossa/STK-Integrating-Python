@@ -140,8 +140,9 @@ CBApropagator_PropObj       = SAOCOMsatellite_SatObj.Propagator
 CBApropagator_SGP4Obj       = CBApropagator_PropObj.QueryInterface(STKObjects.IAgVePropagatorSGP4)
 CBApropagator_SGP4Obj.EphemerisInterval.SetImplicitInterval(root.CurrentScenario.Vgt.EventIntervals.Item("AnalysisInterval"))  # Link to scenario period
 CBApropagator_SGP4Obj.Step  = StepTime
-CBApropagator_SGP4AutoU = CBApropagator_SGP4Obj.AutoUpdate
-CBApropagator_SGP4AutoU.SelectedSource = 3
+CBApropagator_SGP4Obj.AutoUpdateEnabled = False
+#La siguiente linea no es necesaria ejecutarla porque al poner False ya la configura en 3
+#CBApropagator_SGP4Obj.AutoUpdate.SelectedSource = 3
 #
 #CBApropagator_SGP4AutoU.FileSource.Filename('SAOCOM-1B.tle')
 CBApropagator_SGP4Obj.CommonTasks.AddSegsFromOnlineSource('46265')  # Cambiar a TLE
@@ -207,12 +208,12 @@ SAOCOMmass.Mass             = 0.00100000
 
 access = CBAreceiver_STKObj.GetAccessToObject(CBAtransmitter_STKObj)
 access.ComputeAccess()
-accessDP        = access.DataProviders.Item('Access Data')
-accessDP2       = accessDP.QueryInterface(STKObjects.IAgDataPrveIntrval)
-results         = accessDP2.Exec(scenario_ScenObj.StartTime, scenario_ScenObj.StopTime)
-accessStartTime = results.DataSets.GetDataSetByName('Start Time').GetValues()
-accessStopTime  = results.DataSets.GetDataSetByName('Stop Time').GetValues()
-print(accessStartTime, accessStopTime)
+#accessDP        = access.DataProviders.Item('Access Data')
+#accessDP2       = accessDP.QueryInterface(STKObjects.IAgDataPrvInterval)
+#results         = accessDP2.Exec(scenario_ScenObj.StartTime, scenario_ScenObj.StopTime)
+#accessStartTime = results.DataSets.GetDataSetByName('Start Time').GetValues()
+#accessStopTime  = results.DataSets.GetDataSetByName('Stop Time').GetValues()
+#print(accessStartTime, accessStopTime)
 
 ######################################
 ##    Task 7
@@ -224,8 +225,10 @@ AERdata_GroupObj        = AERdata.QueryInterface(STKObjects.IAgDataProviderGroup
 AERdata_DataObj         = AERdata_GroupObj.Group
 AERdata_Default         = AERdata_DataObj.Item('Default')
 AERdata_TimeVar         = AERdata_Default.QueryInterface(STKObjects.IAgDataPrvTimeVar)
-AERdata_elements        = ['Azimuth', 'Elevation', 'Range']
+AERdata_elements        = ['Access Number', 'Time', 'Azimuth', 'Elevation', 'Range']
 AERdata_results         = AERdata_TimeVar.ExecElements(scenario_ScenObj.StartTime,scenario_ScenObj.StopTime,StepTime,AERdata_elements)
+accessTime              = AERdata_results.DataSets.GetDataSetByName('Time').GetValues()
+accessAccessNumer       = AERdata_results.DataSets.GetDataSetByName('Access Number').GetValues()
 accessAzimuth           = AERdata_results.DataSets.GetDataSetByName('Azimuth').GetValues()
 accessElevation         = AERdata_results.DataSets.GetDataSetByName('Elevation').GetValues()
 accessRange             = AERdata_results.DataSets.GetDataSetByName('Range').GetValues()
