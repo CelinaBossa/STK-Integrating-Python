@@ -228,7 +228,7 @@ AERdata_TimeVar         = AERdata_Default.QueryInterface(STKObjects.IAgDataPrvTi
 AERdata_elements        = ['Access Number', 'Time', 'Azimuth', 'Elevation', 'Range']
 AERdata_results         = AERdata_TimeVar.ExecElements(scenario_ScenObj.StartTime,scenario_ScenObj.StopTime,StepTime,AERdata_elements)
 accessTime              = AERdata_results.DataSets.GetDataSetByName('Time').GetValues()
-accessAccessNumer       = AERdata_results.DataSets.GetDataSetByName('Access Number').GetValues()
+accessAccessNumber       = AERdata_results.DataSets.GetDataSetByName('Access Number').GetValues()
 accessAzimuth           = AERdata_results.DataSets.GetDataSetByName('Azimuth').GetValues()
 accessElevation         = AERdata_results.DataSets.GetDataSetByName('Elevation').GetValues()
 accessRange             = AERdata_results.DataSets.GetDataSetByName('Range').GetValues()
@@ -280,10 +280,58 @@ accessBER               = LinkInfo_results.DataSets.GetDataSetByName('BER').GetV
 #receiverDPElements = receiverDP2.ExecElements(rptElements)
 #receiverModulation = receiverDPElements.DataSets.GetDataSetByName('Cable Receiver - BER').GetValues()
 #print(receiverModulation)
-#
-#transmitterDP       = CBAtransmitter_STKObj.DataProviders.Item('Basic Properties')
-#transmitterDP2      = transmitterDP.QueryInterface(STKObjects.IAgDataPrvFixed)
-#rptElements       = ['Modulation Type', 'Gain']
-#transmitterDPElements = transmitterDP2.ExecElements(rptElements)
-#transmitterModulation = transmitterDPElements.DataSets.GetDataSetByName('Modulation Type').GetValues()
-#print(transmitterModulation)
+
+BasicProperties         = CBAtransmitter_STKObj.DataProviders.Item('Basic Properties')
+BasicProperties_PrvFixed= BasicProperties.QueryInterface(STKObjects.IAgDataPrvFixed)
+BasicProperties_elements= ['Modulation Type']
+BasicProperties_results = BasicProperties_PrvFixed.ExecElements(BasicProperties_elements)
+Modulation             = BasicProperties_results.DataSets.GetDataSetByName('Modulation Type').GetValues()
+#print(accessModulation)
+
+accessModulation        = []
+for i in range(len(accessTime)):
+    accessModulation.append(Modulation)
+
+import pandas as pd
+tabla = {
+		    "Access Number": accessAccessNumer,
+		    "Time": accessTime,
+           "Modulation": accessModulation,
+		    "Azimuth": accessAzimuth,
+           "Elevation": accessElevation,
+		    "Range": accessRange,
+           "x": accessX,
+           "y": accessY,
+           "z": accessZ,
+           "xVel": accessXVel,
+           "yVel": accessYVel,
+           "zVel": accessZVel,
+           "RelSpeed": accessRelSpeed,
+           "Prop Loss": accessPropLoss,
+           "EIRP": accessEIRP,
+           "Rcvd. Frequency": accessRcvdFrequency,
+           "Freq. Doppler Shift": accessFreqDopplerShift,
+           "Bandwidth Overlap": accessBandwidthOverlap,
+           "Rcvd. Iso. Power": accessRcvdIsoPower,
+           "Flux Density": accessFluxDensity,
+           "g/T": accessgT,
+           "C/No": accessCNo,
+           "Bandwidth": accessBandwidth,
+           "C/N": accessCN,
+           "Spectral Flux Density": accessSpectralFluxDensity,
+           "Eb/No": accessEbNo,
+           "BER": accessBER,          
+}
+
+reporte = pd.DataFrame(tabla)
+
+reporte.to_csv("Reporte.csv")
+#import pandas as pd
+#tabla = {
+#		    "Access Number": accessAccessNumer,
+#		    "Time": accessTime,
+#		    "Azimuth": accessAzimuth,
+#            "Elevation": accessElevation,
+#		    "Range": accessRange,
+#}
+#reporte = pd.DataFrame(tabla)
