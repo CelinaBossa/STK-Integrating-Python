@@ -1,9 +1,11 @@
+
+
 ### Set the variables
 
 #   Scenrio Properties
 ScenarioName  = 'Paper'
-InicialTime   =  '05 Jul 2022 00:00:00.000'
-FinalTime     = '23 Jul 2022 00:00:00.000'
+InicialTime   =  '18 May 2022 09:21:13.055'
+FinalTime     = '3 Jun 2022 23:32:30.830'
 StepTime      = 8
 
 #   Ground Starion Properties
@@ -26,7 +28,7 @@ POLAR_ReceiverName = 'Receiver3'
 TransmitterName = 'Transmitter2'
 
 #Satellite
-SatelliteName = 'Saocom-1-B-Julio'
+SatelliteName = 'Saocom-1-B'
 
 #Demodulation
 Dem = '16PSK'
@@ -84,7 +86,7 @@ CBAgroundStation_STKObj     = root.CurrentScenario.Children.New(8, CBA_GroundSta
 CBAgroundStation_FaciObj    = CBAgroundStation_STKObj.QueryInterface(STKObjects.IAgFacility)
 root.UnitPreferences.Item('LatitudeUnit').SetCurrentUnit('deg')
 root.UnitPreferences.Item('LongitudeUnit').SetCurrentUnit('deg')
-CBAgroundStation_FaciObj.UseTerrain = False #buscar el help -> Opt whether to set altitude automatically by using terrain data.
+CBAgroundStation_FaciObj.UseTerrain = True #buscar el help -> Opt whether to set altitude automatically by using terrain data.
 CBAgroundStation_FaciObj.Position.AssignGeodetic(CBA_GroundStationLatitude, CBA_GroundStationLongitude, CBA_GroundStationAltitude)
 
 ## POLAR'S GROUND STATION
@@ -92,7 +94,7 @@ POLARgroundStation_STKObj = root.CurrentScenario.Children.New(8, POLAR_GroundSta
 POLARgroundStation_FaciObj = POLARgroundStation_STKObj.QueryInterface(STKObjects.IAgFacility)
 root.UnitPreferences.Item('LatitudeUnit').SetCurrentUnit('deg')
 root.UnitPreferences.Item('LongitudeUnit').SetCurrentUnit('deg')
-POLARgroundStation_FaciObj.UseTerrain = False
+POLARgroundStation_FaciObj.UseTerrain = True
 POLARgroundStation_FaciObj.Position.AssignGeodetic(POLAR_GroundStationLatitude, POLAR_GroundStationLongitude, POLAR_GroundStationAltitude)
 
 
@@ -141,11 +143,19 @@ CBApropagator_SGP4Obj       = CBApropagator_PropObj.QueryInterface(STKObjects.IA
 CBApropagator_SGP4Obj.EphemerisInterval.SetImplicitInterval(root.CurrentScenario.Vgt.EventIntervals.Item("AnalysisInterval"))  # Link to scenario period
 CBApropagator_SGP4Obj.Step  = StepTime
 CBApropagator_SGP4Obj.AutoUpdateEnabled = False
+
+#CBApropagator_SGP4Obj.AutoUpdate.SelectedSource = 2
+#CBApropagator_SGP4Obj.CommonTasks.AddSegsFromFile("46265","SAOCOM-1B.tle.txt")
+#|-> COMError: (-2147220989, 'Error de sintaxis al tratar de evaluar una cadena de consulta', 
+#('Cannot open file: SAOCOM-1B.tle.txt.', None, None, 0, None))
+
 #La siguiente linea no es necesaria ejecutarla porque al poner False ya la configura en 3
 #CBApropagator_SGP4Obj.AutoUpdate.SelectedSource = 3
 #
 #CBApropagator_SGP4AutoU.FileSource.Filename('SAOCOM-1B.tle')
-CBApropagator_SGP4Obj.CommonTasks.AddSegsFromOnlineSource('46265')  # Cambiar a TLE
+#CBApropagator_SGP4Obj.CommonTasks.AddSegsFromOnlineSource('46265')  # Cambiar a TLE
+#CBApropagator_SGP4Obj.CommonTasks.AddSegsFromFile("0","SAOCOM-1B")
+#CBApropagator_SGP4Obj.AutoUpdate.FileSource.Filename('SAOCOM-1B.tle')
 CBApropagator_SGP4Obj.Propagate()
 
 #Set satellite attitude basic spinning ## me lo va a dar el TLE
@@ -208,11 +218,11 @@ SAOCOMmass.Mass             = 0.00100000
 
 access = CBAreceiver_STKObj.GetAccessToObject(CBAtransmitter_STKObj)
 access.ComputeAccess()
-#accessDP        = access.DataProviders.Item('Access Data')
-#accessDP2       = accessDP.QueryInterface(STKObjects.IAgDataPrvInterval)
-#results         = accessDP2.Exec(scenario_ScenObj.StartTime, scenario_ScenObj.StopTime)
-#accessStartTime = results.DataSets.GetDataSetByName('Start Time').GetValues()
-#accessStopTime  = results.DataSets.GetDataSetByName('Stop Time').GetValues()
+AccessData        = access.DataProviders.Item('Access Data')
+AccessData_ProvG  = AccessData.QueryInterface(STKObjects.IAgDataPrvInterval)
+AccessData_results         = AccessData_ProvG.Exec(scenario_ScenObj.StartTime, scenario_ScenObj.StopTime)
+accessStartTime = AccessData_results.DataSets.GetDataSetByName('Start Time').GetValues()
+accessStopTime  = AccessData_results.DataSets.GetDataSetByName('Stop Time').GetValues()
 #print(accessStartTime, accessStopTime)
 
 ######################################
@@ -226,12 +236,24 @@ AERdata_DataObj         = AERdata_GroupObj.Group
 AERdata_Default         = AERdata_DataObj.Item('Default')
 AERdata_TimeVar         = AERdata_Default.QueryInterface(STKObjects.IAgDataPrvTimeVar)
 AERdata_elements        = ['Access Number', 'Time', 'Azimuth', 'Elevation', 'Range']
-AERdata_results         = AERdata_TimeVar.ExecElements(scenario_ScenObj.StartTime,scenario_ScenObj.StopTime,StepTime,AERdata_elements)
-accessTime              = AERdata_results.DataSets.GetDataSetByName('Time').GetValues()
-accessAccessNumber       = AERdata_results.DataSets.GetDataSetByName('Access Number').GetValues()
-accessAzimuth           = AERdata_results.DataSets.GetDataSetByName('Azimuth').GetValues()
-accessElevation         = AERdata_results.DataSets.GetDataSetByName('Elevation').GetValues()
-accessRange             = AERdata_results.DataSets.GetDataSetByName('Range').GetValues()
+accessTime              = []
+accessAccessNumber      = []
+accessAzimuth           = []
+accessElevation         = []
+accessRange             = []
+for i in range(len(accessStartTime)): 
+    AERdata_results         = AERdata_TimeVar.ExecElements(accessStartTime[i],accessStopTime[i],StepTime,AERdata_elements)
+    Time = list(AERdata_results.DataSets.GetDataSetByName('Time').GetValues())
+    AccessNumber = list(AERdata_results.DataSets.GetDataSetByName('Access Number').GetValues())
+    Azimuth = list(AERdata_results.DataSets.GetDataSetByName('Azimuth').GetValues())
+    Elevation = list(AERdata_results.DataSets.GetDataSetByName('Elevation').GetValues())
+    Range = list(AERdata_results.DataSets.GetDataSetByName('Range').GetValues())
+    for j in range (len(AccessNumber)):
+        accessTime.append(Time[j])
+        accessAccessNumber.append(AccessNumber[j])
+        accessAzimuth.append(Azimuth[j])
+        accessElevation.append(Elevation[j])
+        accessRange.append(Range[j])
 
 ##Data provider de To Position Velocity -> ICRF -> x - y - z - xVel - yVel - zVel - RelSpeed
 ToPositionVel           = access.DataProviders.Item('To Position Velocity')
@@ -240,14 +262,30 @@ ToPositionVel_DataObj   = ToPositionVel_GroupObj.Group
 ToPositionVel_ICRF      = ToPositionVel_DataObj.Item('ICRF')
 ToPositionVel_TimeVar   = ToPositionVel_ICRF.QueryInterface(STKObjects.IAgDataPrvTimeVar)
 ToPositionVel_elements  = ['x', 'y', 'z', 'xVel', 'yVel', 'zVel', 'RelSpeed']
-ToPositionVel_results   = ToPositionVel_TimeVar.ExecElements(scenario_ScenObj.StartTime,scenario_ScenObj.StopTime,StepTime,ToPositionVel_elements)
-accessX                 = ToPositionVel_results.DataSets.GetDataSetByName('x').GetValues()
-accessY                 = ToPositionVel_results.DataSets.GetDataSetByName('y').GetValues()
-accessZ                 = ToPositionVel_results.DataSets.GetDataSetByName('z').GetValues()
-accessXVel              = ToPositionVel_results.DataSets.GetDataSetByName('xVel').GetValues()
-accessYVel              = ToPositionVel_results.DataSets.GetDataSetByName('yVel').GetValues()
-accessZVel              = ToPositionVel_results.DataSets.GetDataSetByName('zVel').GetValues()
-accessRelSpeed          = ToPositionVel_results.DataSets.GetDataSetByName('RelSpeed').GetValues()
+accessX                 = []
+accessY                 = []
+accessZ                 = []
+accessXVel              = []
+accessYVel              = []
+accessZVel              = []
+accessRelSpeed          = []
+for i in range(len(accessStartTime)): 
+    ToPositionVel_results   = ToPositionVel_TimeVar.ExecElements(accessStartTime[i],accessStopTime[i],StepTime,ToPositionVel_elements)
+    X = list(ToPositionVel_results.DataSets.GetDataSetByName('x').GetValues())
+    Y = list(ToPositionVel_results.DataSets.GetDataSetByName('y').GetValues())
+    Z = list(ToPositionVel_results.DataSets.GetDataSetByName('z').GetValues())
+    XVel = list(ToPositionVel_results.DataSets.GetDataSetByName('xVel').GetValues())
+    YVel = list(ToPositionVel_results.DataSets.GetDataSetByName('yVel').GetValues())
+    ZVel = list(ToPositionVel_results.DataSets.GetDataSetByName('zVel').GetValues())
+    RelSpeed = (ToPositionVel_results.DataSets.GetDataSetByName('RelSpeed').GetValues())
+    for j in range(len(X)):
+        accessX.append(X[j])
+        accessY.append(Y[j])
+        accessZ.append(Z[j])
+        accessXVel.append(XVel[j])
+        accessYVel.append(YVel[j])
+        accessZVel.append(ZVel[j])
+        accessRelSpeed.append(RelSpeed[j])
 
 ##Data provider de Link Information -> Prop Loss - EIRP - Rcvd. Frequency - Freq. Doppler Shift -
 #                                       - Bandwidth Overlap - Rcvd. Iso. Power - Flux Density -
@@ -256,21 +294,51 @@ accessRelSpeed          = ToPositionVel_results.DataSets.GetDataSetByName('RelSp
 LinkInfo                = access.DataProviders.Item('Link Information')
 LinkInfo_TimeVar        = LinkInfo.QueryInterface(STKObjects.IAgDataPrvTimeVar)
 LinkInfo_elements       = ['Prop Loss', 'EIRP', 'Rcvd. Frequency', 'Freq. Doppler Shift', 'Bandwidth Overlap','Rcvd. Iso. Power', 'Flux Density', 'g/T', 'C/No', 'Bandwidth', 'C/N', 'Spectral Flux Density', 'Eb/No','BER']
-LinkInfo_results        = LinkInfo_TimeVar.ExecElements(scenario_ScenObj.StartTime,scenario_ScenObj.StopTime,StepTime,LinkInfo_elements)
-accessPropLoss          = LinkInfo_results.DataSets.GetDataSetByName('Prop Loss').GetValues()
-accessEIRP              = LinkInfo_results.DataSets.GetDataSetByName('EIRP').GetValues()
-accessRcvdFrequency     = LinkInfo_results.DataSets.GetDataSetByName('Rcvd. Frequency').GetValues()
-accessFreqDopplerShift  = LinkInfo_results.DataSets.GetDataSetByName('Freq. Doppler Shift').GetValues()
-accessBandwidthOverlap  = LinkInfo_results.DataSets.GetDataSetByName('Bandwidth Overlap').GetValues()
-accessRcvdIsoPower      = LinkInfo_results.DataSets.GetDataSetByName('Rcvd. Iso. Power').GetValues()
-accessFluxDensity       = LinkInfo_results.DataSets.GetDataSetByName('Flux Density').GetValues()
-accessgT                = LinkInfo_results.DataSets.GetDataSetByName('g/T').GetValues()
-accessCNo               = LinkInfo_results.DataSets.GetDataSetByName('C/No').GetValues()
-accessBandwidth         = LinkInfo_results.DataSets.GetDataSetByName('Bandwidth').GetValues()
-accessCN                = LinkInfo_results.DataSets.GetDataSetByName('C/N').GetValues()
-accessSpectralFluxDensity = LinkInfo_results.DataSets.GetDataSetByName('Spectral Flux Density').GetValues()
-accessEbNo              = LinkInfo_results.DataSets.GetDataSetByName('Eb/No').GetValues()
-accessBER               = LinkInfo_results.DataSets.GetDataSetByName('BER').GetValues()
+accessPropLoss          = []
+accessEIRP              = []
+accessRcvdFrequency     = []
+accessFreqDopplerShift  = []
+accessBandwidthOverlap  = []
+accessRcvdIsoPower      = []
+accessFluxDensity       = []
+accessgT                = []
+accessCNo               = []
+accessBandwidth         = []
+accessCN                = []
+accessSpectralFluxDensity = []
+accessEbNo              = []
+accessBER               = []
+for i in range(len(accessStartTime)):
+    LinkInfo_results        = LinkInfo_TimeVar.ExecElements(accessStartTime[i],accessStopTime[i],StepTime,LinkInfo_elements)
+    PropLoss = list(LinkInfo_results.DataSets.GetDataSetByName('Prop Loss').GetValues())
+    EIRP = list(LinkInfo_results.DataSets.GetDataSetByName('EIRP').GetValues())
+    RcvdFrequency = list(LinkInfo_results.DataSets.GetDataSetByName('Rcvd. Frequency').GetValues())
+    FreqDopplerShift = list(LinkInfo_results.DataSets.GetDataSetByName('Freq. Doppler Shift').GetValues())
+    BandwidthOverlap = list(LinkInfo_results.DataSets.GetDataSetByName('Bandwidth Overlap').GetValues())
+    RcvdIsoPower = list(LinkInfo_results.DataSets.GetDataSetByName('Rcvd. Iso. Power').GetValues())
+    FluxDensity = list(LinkInfo_results.DataSets.GetDataSetByName('Flux Density').GetValues())
+    gT = list(LinkInfo_results.DataSets.GetDataSetByName('g/T').GetValues())
+    CNo = list(LinkInfo_results.DataSets.GetDataSetByName('C/No').GetValues())
+    Bandwidth = list(LinkInfo_results.DataSets.GetDataSetByName('Bandwidth').GetValues())
+    CN = list(LinkInfo_results.DataSets.GetDataSetByName('C/N').GetValues())
+    SpectralFluxDensity = list(LinkInfo_results.DataSets.GetDataSetByName('Spectral Flux Density').GetValues())
+    EbNo = list(LinkInfo_results.DataSets.GetDataSetByName('Eb/No').GetValues())
+    BER = list(LinkInfo_results.DataSets.GetDataSetByName('BER').GetValues())
+    for j in range (len(BER)):
+        accessPropLoss.append(PropLoss[j])
+        accessEIRP.append(EIRP[j])
+        accessRcvdFrequency.append(RcvdFrequency[j])
+        accessFreqDopplerShift.append(FreqDopplerShift[j])
+        accessBandwidthOverlap.append(BandwidthOverlap[j])
+        accessRcvdIsoPower.append(RcvdIsoPower[j])
+        accessFluxDensity.append(FluxDensity[j])
+        accessgT.append(gT[j])
+        accessCNo.append(CNo[j])
+        accessBandwidth.append(Bandwidth[j])
+        accessCN.append(CN[j])
+        accessSpectralFluxDensity.append(SpectralFluxDensity[j])
+        accessEbNo.append(EbNo[j])
+        accessBER.append(BER[j])
 
 
 
@@ -294,12 +362,12 @@ for i in range(len(accessTime)):
 
 import pandas as pd
 tabla = {
-		    "Access Number": accessAccessNumer,
-		    "Time": accessTime,
+		   "Access Number": accessAccessNumber,
+		   "Time": accessTime,
            "Modulation": accessModulation,
-		    "Azimuth": accessAzimuth,
+		   "Azimuth": accessAzimuth,
            "Elevation": accessElevation,
-		    "Range": accessRange,
+		   "Range": accessRange,
            "x": accessX,
            "y": accessY,
            "z": accessZ,
