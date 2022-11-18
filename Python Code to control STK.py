@@ -1,46 +1,55 @@
 ### Set the variables
 
 #   Scenrio Properties
-ScenarioName  = 'Paper'
-InicialTime   =  '18 May 2022 09:21:13.055'
-FinalTime     = '3 Jun 2022 23:32:30.830'
-StepTime      = 8
+ScName                  = 'Paper'
+InicialTm               =  '18 May 2022 09:21:00.000'
+FinalTm                 = '3 Jun 2022 23:32:30.830'
+StepTm                  = 8
 
 #   Ground Starion Properties
-CBA_GroundStationName   = 'CordBS'
-CBA_GroundStationLatitude = -31.4343
-CBA_GroundStationLongitude = -64.2672
-CBA_GroundStationAltitude = 0
-POLAR_GroundStationName   = 'polarBS'
-POLAR_GroundStationLatitude = -90
-POLAR_GroundStationLongitude = -90
-POLAR_GroundStationAltitude = 0
+CBA_GdStaName           = 'CordBS'
+CBA_GdStaLat            = -31.4343
+CBA_GdStaLon            = -64.2672
+CBA_GdStaAlt            = 0
+POLAR_GdStaName         = 'polarBS'
+POLAR_GdStaLat          = -90
+POLAR_GdStaLon          = -90
+POLAR_GdStaAlt          = 0
 
 
 #   Receptor Properties
-CBA_ReceiverName = 'Receiver2'
-ReciverType = 'Simple Receiver Model'
-POLAR_ReceiverName = 'Receiver3'
+CBA_RecName             = 'Receiver2'
+RecType                 = 'Simple Receiver Model'
+POLAR_RecName           = 'Receiver3'
 
 #   Transmitter Propieties
-TransmitterName = 'Transmitter2'
+TraName                 = 'Transmitter2'
 
 #Satellite
-SatelliteName = 'Saocom-1-B'
+SaName                  = 'Saocom-1-B'
 
 #Demodulation
-DemOptions = ['QPSK','8PSK','16PSK','QAM16','QAM32']
-Dem = DemOptions[0]
+DemOptions              = ['QPSK','8PSK','16PSK','QAM16','QAM32']
+Dem                     = DemOptions[0]
+
+#Data Rare
+DataRateOptions         = [2,3,4,4,5]
+DataRate                = DataRateOptions[0] 
 
 #   Antenna Properties
-XantPosition  = 50
-YantPosition  = -100
-ZantPosition  = 0
-ElvStr = ["-65","-32","0","32","65"]
-ElvOptions = [-65,-32,0,32,65]
-Elv = ElvOptions[0]
+XantPosition            = 50
+YantPosition            = -100
+ZantPosition            = 0
+ElvOptions              = [-65,-32.5,0,32.5,65]
+Elv                     = ElvOptions[0]
 
-
+#-------------------------------------------------------------------------------
+#Funtions
+#X
+#X
+#X
+#X
+#-------------------------------------------------------------------------------
 
 ###############################################################################
 ##    Task 1
@@ -67,14 +76,14 @@ from comtypes.gen import STKUtil
 ##    Task 2
 ##    1. Create a new scenario
 
-root.NewScenario(ScenarioName)
+root.NewScenario(ScName)
 scenario_STKObj          = root.CurrentScenario
 
 ##    2. Set the analytical time period.
 
 scenario_ScObj         = scenario_STKObj.QueryInterface(STKObjects.IAgScenario)
-scenario_ScObj.SetTimePeriod(InicialTime,FinalTime)
-scenario_ScObj.Animation.AnimStepValue = StepTime
+scenario_ScObj.SetTimePeriod(InicialTm,FinalTm)
+scenario_ScObj.Animation.AnimStepValue = StepTm
 
 ##    3. Reset the animation time.
 root.Rewind();
@@ -86,20 +95,20 @@ root.Rewind();
 ##    1. Add a facility object to the scenario
 
 ## CORDOBA'S GROUND STATION
-CBAgroundStation_STKObj     = root.CurrentScenario.Children.New(8, CBA_GroundStationName)
-CBAgroundStation_FaObj    = CBAgroundStation_STKObj.QueryInterface(STKObjects.IAgFacility)
+CBAGdSta_STKObj     = root.CurrentScenario.Children.New(8, CBA_GdStaName)
+CBAGdSta_FaObj    = CBAGdSta_STKObj.QueryInterface(STKObjects.IAgFacility)
 root.UnitPreferences.Item('LatitudeUnit').SetCurrentUnit('deg')
 root.UnitPreferences.Item('LongitudeUnit').SetCurrentUnit('deg')
-CBAgroundStation_FaObj.UseTerrain = True #buscar el help -> Opt whether to set altitude automatically by using terrain data.
-CBAgroundStation_FaObj.Position.AssignGeodetic(CBA_GroundStationLatitude, CBA_GroundStationLongitude, CBA_GroundStationAltitude)
+CBAGdSta_FaObj.UseTerrain = False #buscar el help -> Opt whether to set altitude automatically by using terrain data.
+CBAGdSta_FaObj.Position.AssignGeodetic(CBA_GdStaLat, CBA_GdStaLon, CBA_GdStaAlt)
 
 ## POLAR'S GROUND STATION
-POLARgroundStation_STKObj = root.CurrentScenario.Children.New(8, POLAR_GroundStationName)
-POLARgroundStation_FaObj = POLARgroundStation_STKObj.QueryInterface(STKObjects.IAgFacility)
+POLARGdSta_STKObj = root.CurrentScenario.Children.New(8, POLAR_GdStaName)
+POLARGdSta_FaObj = POLARGdSta_STKObj.QueryInterface(STKObjects.IAgFacility)
 root.UnitPreferences.Item('LatitudeUnit').SetCurrentUnit('deg')
 root.UnitPreferences.Item('LongitudeUnit').SetCurrentUnit('deg')
-POLARgroundStation_FaObj.UseTerrain = True
-POLARgroundStation_FaObj.Position.AssignGeodetic(POLAR_GroundStationLatitude, POLAR_GroundStationLongitude, POLAR_GroundStationAltitude)
+POLARGdSta_FaObj.UseTerrain = True
+POLARGdSta_FaObj.Position.AssignGeodetic(POLAR_GdStaLat, POLAR_GdStaLon, POLAR_GdStaAlt)
 
 
 ######################################
@@ -107,26 +116,26 @@ POLARgroundStation_FaObj.Position.AssignGeodetic(POLAR_GroundStationLatitude, PO
 ##    1. Add a Receptor object to the facility
 
 # CORDOBA'S RECEPTOR (cambiar nombre)
-CBAreceiver_STKObj          = CBAgroundStation_STKObj.Children.New(17, CBA_ReceiverName)  # eReceiver
-CBAreceiver_RecObj          = CBAreceiver_STKObj.QueryInterface(STKObjects.IAgReceiver)
+CBArec_STKObj          = CBAGdSta_STKObj.Children.New(17, CBA_RecName)  # eReceiver
+CBArec_RecObj          = CBArec_STKObj.QueryInterface(STKObjects.IAgReceiver)
 # POLAR'S RECEPTOR
-POLARreceiver_STKObj        = POLARgroundStation_STKObj.Children.New(17, POLAR_ReceiverName)  # eReceiver
-POLARreceiver_RecObj        = POLARreceiver_STKObj.QueryInterface(STKObjects.IAgReceiver)
+POLARrec_STKObj        = POLARGdSta_STKObj.Children.New(17, POLAR_RecName)  # eReceiver
+POLARrec_RecObj        = POLARrec_STKObj.QueryInterface(STKObjects.IAgReceiver)
 
 # Modify Receiver Type
-CBAreceiver_RecObj.SetModel(ReciverType) #CORDOBA
-POLARreceiver_RecObj.SetModel(ReciverType) #POLAR
+CBArec_RecObj.SetModel(RecType) #CORDOBA
+POLARrec_RecObj.SetModel(RecType) #POLAR
 
 # Modify Receiver Demodulator Properties
 # CORDOBA'S RECEPTOR
-CBArecModel_ModObj          = CBAreceiver_RecObj.Model
+CBArecModel_ModObj          = CBArec_RecObj.Model
 CBArecModel_SModObj         = CBArecModel_ModObj.QueryInterface(STKObjects.IAgReceiverModelSimple)
 CBArecModel_SModObj.AutoSelectDemodulator = False  
 CBArecModel_SModObj.SetDemodulator(Dem) 
 CBArecModel_SModObj.GOverT  = 24.83 #dB/K 
 
 # POLAR'S RECEPTOR    
-POLARrecModel_ModObj        = POLARreceiver_RecObj.Model
+POLARrecModel_ModObj        = POLARrec_RecObj.Model
 POLARrecModel_SModObj       = POLARrecModel_ModObj.QueryInterface(STKObjects.IAgReceiverModelSimple)
 POLARrecModel_SModObj.AutoSelectDemodulator = False  
 POLARrecModel_SModObj.SetDemodulator(Dem)  
@@ -136,17 +145,17 @@ POLARrecModel_SModObj.GOverT = 24.83 #dB/K
 ##    Task 5
 ##    1. Add a Satellite object to the scenario
 
-SAOCOMsatellite_STKObj      = root.CurrentScenario.Children.New(18, SatelliteName)  # eSatellite
-SAOCOMsatellite_SaObj      = SAOCOMsatellite_STKObj.QueryInterface(STKObjects.IAgSatellite)
-SAOCOMsatellite_SaObj.SetPropagatorType(STKObjects.ePropagatorSGP4)
+SAOCOMsa_STKObj      = root.CurrentScenario.Children.New(18, SaName)  # eSatellite
+SAOCOMsa_SaObj       = SAOCOMsa_STKObj.QueryInterface(STKObjects.IAgSatellite)
+SAOCOMsa_SaObj.SetPropagatorType(STKObjects.ePropagatorSGP4)
 
 # Set satellite propagator to SGP4 and propagate
 #satellite2.SetPropagatorType(4)  # ePropagatorSGP4
-CBApropagator_PropObj       = SAOCOMsatellite_SaObj.Propagator
-CBApropagator_SGP4Obj       = CBApropagator_PropObj.QueryInterface(STKObjects.IAgVePropagatorSGP4)
-CBApropagator_SGP4Obj.EphemerisInterval.SetImplicitInterval(root.CurrentScenario.Vgt.EventIntervals.Item("AnalysisInterval"))  # Link to scenario period
-CBApropagator_SGP4Obj.Step  = StepTime
-CBApropagator_SGP4Obj.AutoUpdateEnabled = False
+CBAprop_PropObj       = SAOCOMsa_SaObj.Propagator
+CBAprop_SGP4Obj       = CBAprop_PropObj.QueryInterface(STKObjects.IAgVePropagatorSGP4)
+CBAprop_SGP4Obj.EphemerisInterval.SetImplicitInterval(root.CurrentScenario.Vgt.EventIntervals.Item("AnalysisInterval"))  # Link to scenario period
+CBAprop_SGP4Obj.Step  = StepTm
+CBAprop_SGP4Obj.AutoUpdateEnabled = False
 
 #CBApropagator_SGP4Obj.AutoUpdate.SelectedSource = 2
 #CBApropagator_SGP4Obj.CommonTasks.AddSegsFromFile("46265","SAOCOM-1B.tle.txt")
@@ -160,254 +169,246 @@ CBApropagator_SGP4Obj.AutoUpdateEnabled = False
 #CBApropagator_SGP4Obj.CommonTasks.AddSegsFromOnlineSource('46265')  # Cambiar a TLE
 #CBApropagator_SGP4Obj.CommonTasks.AddSegsFromFile("0","SAOCOM-1B")
 #CBApropagator_SGP4Obj.AutoUpdate.FileSource.Filename('SAOCOM-1B.tle')
-CBApropagator_SGP4Obj.Propagate()
+CBAprop_SGP4Obj.Propagate()
 
 #Set satellite attitude basic spinning ## me lo va a dar el TLE
-CBAattitude_AttObj          = SAOCOMsatellite_SaObj.Attitude
-CBAattitude_OrbitAttStdObj       = CBAattitude_AttObj.QueryInterface(STKObjects.IAgVeOrbitAttitudeStandard)
-CBAattitude_BasicObj        = CBAattitude_OrbitAttStdObj.Basic
-CBAattitude_BasicObj.SetProfileType(6)
-CBAattitude_ProfObj         = CBAattitude_BasicObj.Profile
-CBAattitude_FIAObj          = CBAattitude_ProfObj.QueryInterface(STKObjects.IAgVeProfileFixedInAxes)
-CBAattitude_FIAObj.ReferenceAxes = 'Satellite/Saocom-1-B LVLH(Earth)'
-CBAattitude_OrintObj = CBAattitude_FIAObj.Orientation
-CBAattitude_OrintObj.AssignYPRAngles(4,-180,0,-90) #YPR sequence.
+CBAatt_AttObj          = SAOCOMsa_SaObj.Attitude
+CBAatt_OrbitAttStdObj  = CBAatt_AttObj.QueryInterface(STKObjects.IAgVeOrbitAttitudeStandard)
+CBAatt_BasicObj        = CBAatt_OrbitAttStdObj.Basic
+CBAatt_BasicObj.SetProfileType(6)
+CBAatt_ProfObj         = CBAatt_BasicObj.Profile
+CBAatt_FIAObj          = CBAatt_ProfObj.QueryInterface(STKObjects.IAgVeProfileFixedInAxes)
+CBAatt_FIAObj.ReferenceAxes = 'Satellite/Saocom-1-B LVLH(Earth)'
+CBAatt_OrintObj        = CBAatt_FIAObj.Orientation
+CBAatt_OrintObj.AssignYPRAngles(4,-180,0,-90) #YPR sequence.
 
 
 ##    2. Add and Set the antenna object
-SAOCOMantenna_STKObj        = SAOCOMsatellite_STKObj.Children.New(31, 'SAOCOMantenna')  # eAntenna
-SAOCOMantenna_AntObj        = SAOCOMantenna_STKObj.QueryInterface(STKObjects.IAgAntenna)
-SAOCOMantenna_AntObj.SetModel('Bessel Aperture Circular')
-SAOCOMantenna_AntModObj     = SAOCOMantenna_AntObj.Model
-SAOCOMantenna_AntSABObj     = SAOCOMantenna_AntModObj.QueryInterface(STKObjects.IAgAntennaModelApertureCircularBessel)
-SAOCOMantenna_AntSABObj.Diameter = 0.5 #m
-SAOCOMantenna_AntSABObj.ComputeMainlobeGain = False
-SAOCOMantenna_AntModObj.DesignFrequency = 2.255 #GHz la f que pongo acá es la misma que va en la linea 183
-SAOCOMantenna_OrintObj      = SAOCOMantenna_AntObj.Orientation
-SAOCOMantenna_OrintObj.AssignAzEl(0, Elv, 1)  # 1 represents Rotate About Boresight
+SAOCOMant_STKObj        = SAOCOMsa_STKObj.Children.New(31, 'SAOCOMantenna')  # eAntenna
+SAOCOMant_AntObj        = SAOCOMant_STKObj.QueryInterface(STKObjects.IAgAntenna)
+SAOCOMant_AntObj.SetModel('Bessel Aperture Circular')
+SAOCOMant_AntModObj     = SAOCOMant_AntObj.Model
+SAOCOMant_AntSABObj     = SAOCOMant_AntModObj.QueryInterface(STKObjects.IAgAntennaModelApertureCircularBessel)
+SAOCOMant_AntSABObj.Diameter = 0.5 #m
+SAOCOMant_AntSABObj.ComputeMainlobeGain = False
+SAOCOMant_AntModObj.DesignFrequency = 2.255 #GHz la f que pongo acá es la misma que va en la linea 183
+SAOCOMant_OrintObj      = SAOCOMant_AntObj.Orientation
+SAOCOMant_OrintObj.AssignAzEl(0, Elv, 1)  # 1 represents Rotate About Boresight
 #'Value 0° = 1.27222e-14 °'
 
 ##    3. Add a Transmiter object to the satellite
-CBAtransmitter_STKObj       = SAOCOMsatellite_STKObj.Children.New(24, TransmitterName)  # eTransmitter
-CBAtransmitter_TraObj       = CBAtransmitter_STKObj.QueryInterface(STKObjects.IAgTransmitter)
+CBAtra_STKObj       = SAOCOMsa_STKObj.Children.New(24, TraName)  # eTransmitter
+CBAtra_TraObj       = CBAtra_STKObj.QueryInterface(STKObjects.IAgTransmitter)
 
 
 # Modify Transmitter Modulator Properties
-CBAtransmitter_TraObj.SetModel('Complex Transmitter Model')
-CBAtxModel_ModObj           = CBAtransmitter_TraObj.Model
+CBAtra_TraObj.SetModel('Complex Transmitter Model')
+CBAtxModel_ModObj           = CBAtra_TraObj.Model
 CBAtxModel_CmxModObj        = CBAtxModel_ModObj.QueryInterface(STKObjects.IAgTransmitterModelComplex)
 CBAtxModel_CmxModObj.SetModulator(Dem)
 CBAtxModel_CmxModObj.Modulator.AutoScaleBandwidth = True
 CBAtxModel_CmxModObj.Frequency = 2.255  # GHz
 CBAtxModel_CmxModObj.Power  = -14  # dBW
-CBAtxModel_CmxModObj.DataRate = 5  # Mb/sec
+CBAtxModel_CmxModObj.DataRate = DataRate  # Mb/sec
 CBAtxModel_CmxModObj.AntennaControl.ReferenceType = 0  #Link to an Antenna object
 CBAtxModel_CmxModObj.AntennaControl.LinkedAntennaObject
 
 
 #Modifico masa a satellite
 #'Value 0 kg is invalid. Value range is 0.00100000 kg to 1000000000.00000000 kg'
-SAOCOMmass                  = SAOCOMsatellite_SaObj.MassProperties
+SAOCOMmass                  = SAOCOMsa_SaObj.MassProperties
 SAOCOMmass.Mass             = 0.00100000
 
-######################################
-##    Task 6
-##    1. Retrive and view the access data in Phyton
+print('The Configuration is Done. Please upload the TLE')
 
-# You now have a scenario with a Target object and a Satelite object. Determine when the Satelite object ...
-
-# 1. Browsw to the STK Programming Interface help files.
-# 2. Locate and manual enter code into MATLAB to compute an access between two STK Objects using the ...
-
-# HINT: If you cannot located the code, axpand the following paragraph:
-
-for modulation in range(len(DemOptions)):
-    for angle in range(len(ElvOptions)):
-        Dem = DemOptions[modulation]
-        Elv = ElvOptions[angle]
-        CBArecModel_SModObj.SetDemodulator(Dem)
-        POLARrecModel_SModObj.SetDemodulator(Dem)
-        SAOCOMantenna_OrintObj.AssignAzEl(0, Elv, 1)
-        CBAtxModel_CmxModObj.SetModulator(Dem)
-        access = CBAreceiver_STKObj.GetAccessToObject(CBAtransmitter_STKObj)
-        access.ComputeAccess()
-        AccessData        = access.DataProviders.Item('Access Data')
-        AccessData_ProvG  = AccessData.QueryInterface(STKObjects.IAgDataPrvInterval)
-        AccessData_results         = AccessData_ProvG.Exec(scenario_ScObj.StartTime, scenario_ScObj.StopTime)
-        accessStartTime = AccessData_results.DataSets.GetDataSetByName('Start Time').GetValues()
-        accessStopTime  = AccessData_results.DataSets.GetDataSetByName('Stop Time').GetValues()
-        #print(accessStartTime, accessStopTime)
+def report():
+    for modulation in range(len(DemOptions)):
+        for angle in range(len(ElvOptions)):
+            single_report(DemOptions[modulation],ElvOptions[angle])
+    print('Done')
+    
+def single_report(Demodulation, Angle):
+    Dem = Demodulation
+    Elv = Angle
+    'QPSK','8PSK','16PSK','QAM16','QAM32'
+    if Demodulation == 'QPSK':
+        DataRate = DataRateOptions[0]
+    elif Demodulation == '8PSK':
+        DataRate = DataRateOptions[1]
+    elif Demodulation ==  '16PSK':
+        DataRate = DataRateOptions[2]
+    elif Demodulation ==  'QAM16':
+        DataRate = DataRateOptions[3]
+    elif Demodulation ==  'QAM32':
+        DataRate = DataRateOptions[4]
+    CBArecModel_SModObj.SetDemodulator(Dem)
+    POLARrecModel_SModObj.SetDemodulator(Dem)
+    CBAtxModel_CmxModObj.DataRate = DataRate  # Mb/sec
+    SAOCOMant_OrintObj.AssignAzEl(0, Elv, 1)
+    CBAtxModel_CmxModObj.SetModulator(Dem)
+    access = CBArec_STKObj.GetAccessToObject(CBAtra_STKObj)
+    access.ComputeAccess()
+    AccessData        = access.DataProviders.Item('Access Data')
+    AccessData_ProvG  = AccessData.QueryInterface(STKObjects.IAgDataPrvInterval)
+    AccessData_results         = AccessData_ProvG.Exec(scenario_ScObj.StartTime, scenario_ScObj.StopTime)
+    accessStartTime = AccessData_results.DataSets.GetDataSetByName('Start Time').GetValues()
+    accessStopTime  = AccessData_results.DataSets.GetDataSetByName('Stop Time').GetValues()
+    #print(accessStartTime, accessStopTime)
+       
+     ######################################
+    ##    Task 7
+    ##    1. Retrive and view the altitud of the satellite during an access interval.
         
-        ######################################
-        ##    Task 7
-        ##    1. Retrive and view the altitud of the satellite during an access interval.
+    ##Data provider de AER Data -> Default -> Azimuth - Elevation - Range
+    AERdata                 = access.DataProviders.Item('AER Data')
+    AERdata_GroupObj        = AERdata.QueryInterface(STKObjects.IAgDataProviderGroup)
+    AERdata_DataObj         = AERdata_GroupObj.Group
+    AERdata_Default         = AERdata_DataObj.Item('Default')
+    AERdata_TimeVar         = AERdata_Default.QueryInterface(STKObjects.IAgDataPrvTimeVar)
+    AERdata_elements        = ['Access Number', 'Time', 'Azimuth', 'Elevation', 'Range']
+    accessTime              = []
+    accessAccessNumber      = []
+    accessAzimuth           = []
+    accessElevation         = []
+    accessRange             = []
+    for i in range(len(accessStartTime)): 
+        AERdata_results         = AERdata_TimeVar.ExecElements(accessStartTime[i],accessStopTime[i],StepTm,AERdata_elements)
+        Time = list(AERdata_results.DataSets.GetDataSetByName('Time').GetValues())
+        AccessNumber = list(AERdata_results.DataSets.GetDataSetByName('Access Number').GetValues())
+        Azimuth = list(AERdata_results.DataSets.GetDataSetByName('Azimuth').GetValues())
+        Elevation = list(AERdata_results.DataSets.GetDataSetByName('Elevation').GetValues())
+        Range = list(AERdata_results.DataSets.GetDataSetByName('Range').GetValues())
+        for j in range (len(AccessNumber)):
+            accessTime.append(Time[j])
+            accessAccessNumber.append(AccessNumber[j])
+            accessAzimuth.append(round(Azimuth[j],6))
+            accessElevation.append(round(Elevation[j],6))
+            accessRange.append(round(Range[j],6))   
+            
+    ##Data provider de To Position Velocity -> ICRF -> x - y - z - xVel - yVel - zVel - RelSpeed
+    ToPositionVel           = access.DataProviders.Item('To Position Velocity')
+    ToPositionVel_GroupObj  = ToPositionVel.QueryInterface(STKObjects.IAgDataProviderGroup)
+    ToPositionVel_DataObj   = ToPositionVel_GroupObj.Group
+    ToPositionVel_ICRF      = ToPositionVel_DataObj.Item('ICRF')
+    ToPositionVel_TimeVar   = ToPositionVel_ICRF.QueryInterface(STKObjects.IAgDataPrvTimeVar)
+    ToPositionVel_elements  = ['x', 'y', 'z', 'xVel', 'yVel', 'zVel', 'RelSpeed']
+    accessX                 = []
+    accessY                 = []
+    accessZ                 = []
+    accessXVel              = []
+    accessYVel              = []
+    accessZVel              = []
+    accessRelSpeed          = []
+    for i in range(len(accessStartTime)): 
+        ToPositionVel_results   = ToPositionVel_TimeVar.ExecElements(accessStartTime[i],accessStopTime[i],StepTm,ToPositionVel_elements)
+        X = list(ToPositionVel_results.DataSets.GetDataSetByName('x').GetValues())
+        Y = list(ToPositionVel_results.DataSets.GetDataSetByName('y').GetValues())
+        Z = list(ToPositionVel_results.DataSets.GetDataSetByName('z').GetValues())
+        XVel = list(ToPositionVel_results.DataSets.GetDataSetByName('xVel').GetValues())
+        YVel = list(ToPositionVel_results.DataSets.GetDataSetByName('yVel').GetValues())
+        ZVel = list(ToPositionVel_results.DataSets.GetDataSetByName('zVel').GetValues())
+        RelSpeed = (ToPositionVel_results.DataSets.GetDataSetByName('RelSpeed').GetValues())
+        for j in range(len(X)):
+            accessX.append(round(X[j],6))
+            accessY.append(round(Y[j],6))
+            accessZ.append(round(Z[j],6))
+            accessXVel.append(round(XVel[j],6))
+            accessYVel.append(round(YVel[j],6))
+            accessZVel.append(round(ZVel[j],6))
+            accessRelSpeed.append(round(RelSpeed[j],6))  
+            
+    ##Data provider de Link Information -> Prop Loss - EIRP - Rcvd. Frequency - Freq. Doppler Shift -
+    #                                       - Bandwidth Overlap - Rcvd. Iso. Power - Flux Density -
+    #                                       - g/T - C/No - Bandwidth - C/N - Spectral Flux Density -
+    #                                       - Eb/No - BER
+    LinkInfo                = access.DataProviders.Item('Link Information')
+    LinkInfo_TimeVar        = LinkInfo.QueryInterface(STKObjects.IAgDataPrvTimeVar)
+    LinkInfo_elements       = ['Prop Loss', 'EIRP', 'Rcvd. Frequency', 'Freq. Doppler Shift', 'Bandwidth Overlap','Rcvd. Iso. Power', 'Flux Density', 'g/T', 'C/No', 'Bandwidth', 'C/N', 'Spectral Flux Density', 'Eb/No','BER']
+    accessPropLoss          = []
+    accessEIRP              = []
+    accessRcvdFrequency     = []
+    accessFreqDopplerShift  = []
+    accessBandwidthOverlap  = []
+    accessRcvdIsoPower      = []
+    accessFluxDensity       = []
+    accessgT                = []
+    accessCNo               = []
+    accessBandwidth         = []
+    accessCN                = []
+    accessSpectralFluxDensity = []
+    accessEbNo              = []
+    accessBER               = []
+    for i in range(len(accessStartTime)):
+        LinkInfo_results        = LinkInfo_TimeVar.ExecElements(accessStartTime[i],accessStopTime[i],StepTm,LinkInfo_elements)
+        PropLoss = list(LinkInfo_results.DataSets.GetDataSetByName('Prop Loss').GetValues())
+        EIRP = list(LinkInfo_results.DataSets.GetDataSetByName('EIRP').GetValues())
+        RcvdFrequency = list(LinkInfo_results.DataSets.GetDataSetByName('Rcvd. Frequency').GetValues())
+        FreqDopplerShift = list(LinkInfo_results.DataSets.GetDataSetByName('Freq. Doppler Shift').GetValues())
+        BandwidthOverlap = list(LinkInfo_results.DataSets.GetDataSetByName('Bandwidth Overlap').GetValues())
+        RcvdIsoPower = list(LinkInfo_results.DataSets.GetDataSetByName('Rcvd. Iso. Power').GetValues())
+        FluxDensity = list(LinkInfo_results.DataSets.GetDataSetByName('Flux Density').GetValues())
+        gT = list(LinkInfo_results.DataSets.GetDataSetByName('g/T').GetValues())
+        CNo = list(LinkInfo_results.DataSets.GetDataSetByName('C/No').GetValues())
+        Bandwidth = list(LinkInfo_results.DataSets.GetDataSetByName('Bandwidth').GetValues())
+        CN = list(LinkInfo_results.DataSets.GetDataSetByName('C/N').GetValues())
+        SpectralFluxDensity = list(LinkInfo_results.DataSets.GetDataSetByName('Spectral Flux Density').GetValues())
+        EbNo = list(LinkInfo_results.DataSets.GetDataSetByName('Eb/No').GetValues())
+        BER = list(LinkInfo_results.DataSets.GetDataSetByName('BER').GetValues())
+        for j in range (len(BER)):
+            accessPropLoss.append(round(PropLoss[j],6))
+            accessEIRP.append(round(EIRP[j],6))
+            accessRcvdFrequency.append(round(RcvdFrequency[j],6))
+            accessFreqDopplerShift.append(round(FreqDopplerShift[j],6))
+            accessBandwidthOverlap.append(round(BandwidthOverlap[j],6))
+            accessRcvdIsoPower.append(round(RcvdIsoPower[j],6))
+            accessFluxDensity.append(round(FluxDensity[j],6))
+            accessgT.append(round(gT[j],6))
+            accessCNo.append(round(CNo[j],6))
+            accessBandwidth.append(round(Bandwidth[j],6))
+            accessCN.append(round(CN[j],6))
+            accessSpectralFluxDensity.append(round(SpectralFluxDensity[j],6))
+            accessEbNo.append(round(EbNo[j],6))
+            accessBER.append(round(BER[j],6))
+            
+    accessModulation        = []
+    accessAntAngle          = []
+    for i in range(len(accessTime)):
+        accessModulation.append(Dem)
+        accessAntAngle.append(str(Elv))  
         
-        ##Data provider de AER Data -> Default -> Azimuth - Elevation - Range
-        AERdata                 = access.DataProviders.Item('AER Data')
-        AERdata_GroupObj        = AERdata.QueryInterface(STKObjects.IAgDataProviderGroup)
-        AERdata_DataObj         = AERdata_GroupObj.Group
-        AERdata_Default         = AERdata_DataObj.Item('Default')
-        AERdata_TimeVar         = AERdata_Default.QueryInterface(STKObjects.IAgDataPrvTimeVar)
-        AERdata_elements        = ['Access Number', 'Time', 'Azimuth', 'Elevation', 'Range']
-        accessTime              = []
-        accessAccessNumber      = []
-        accessAzimuth           = []
-        accessElevation         = []
-        accessRange             = []
-        for i in range(len(accessStartTime)): 
-            AERdata_results         = AERdata_TimeVar.ExecElements(accessStartTime[i],accessStopTime[i],StepTime,AERdata_elements)
-            Time = list(AERdata_results.DataSets.GetDataSetByName('Time').GetValues())
-            AccessNumber = list(AERdata_results.DataSets.GetDataSetByName('Access Number').GetValues())
-            Azimuth = list(AERdata_results.DataSets.GetDataSetByName('Azimuth').GetValues())
-            Elevation = list(AERdata_results.DataSets.GetDataSetByName('Elevation').GetValues())
-            Range = list(AERdata_results.DataSets.GetDataSetByName('Range').GetValues())
-            for j in range (len(AccessNumber)):
-                accessTime.append(Time[j])
-                accessAccessNumber.append(AccessNumber[j])
-                accessAzimuth.append(round(Azimuth[j],3))
-                accessElevation.append(round(Elevation[j],3))
-                accessRange.append(round(Range[j],3))
-        
-        ##Data provider de To Position Velocity -> ICRF -> x - y - z - xVel - yVel - zVel - RelSpeed
-        ToPositionVel           = access.DataProviders.Item('To Position Velocity')
-        ToPositionVel_GroupObj  = ToPositionVel.QueryInterface(STKObjects.IAgDataProviderGroup)
-        ToPositionVel_DataObj   = ToPositionVel_GroupObj.Group
-        ToPositionVel_ICRF      = ToPositionVel_DataObj.Item('ICRF')
-        ToPositionVel_TimeVar   = ToPositionVel_ICRF.QueryInterface(STKObjects.IAgDataPrvTimeVar)
-        ToPositionVel_elements  = ['x', 'y', 'z', 'xVel', 'yVel', 'zVel', 'RelSpeed']
-        accessX                 = []
-        accessY                 = []
-        accessZ                 = []
-        accessXVel              = []
-        accessYVel              = []
-        accessZVel              = []
-        accessRelSpeed          = []
-        for i in range(len(accessStartTime)): 
-            ToPositionVel_results   = ToPositionVel_TimeVar.ExecElements(accessStartTime[i],accessStopTime[i],StepTime,ToPositionVel_elements)
-            X = list(ToPositionVel_results.DataSets.GetDataSetByName('x').GetValues())
-            Y = list(ToPositionVel_results.DataSets.GetDataSetByName('y').GetValues())
-            Z = list(ToPositionVel_results.DataSets.GetDataSetByName('z').GetValues())
-            XVel = list(ToPositionVel_results.DataSets.GetDataSetByName('xVel').GetValues())
-            YVel = list(ToPositionVel_results.DataSets.GetDataSetByName('yVel').GetValues())
-            ZVel = list(ToPositionVel_results.DataSets.GetDataSetByName('zVel').GetValues())
-            RelSpeed = (ToPositionVel_results.DataSets.GetDataSetByName('RelSpeed').GetValues())
-            for j in range(len(X)):
-                accessX.append(round(X[j],3))
-                accessY.append(round(Y[j],3))
-                accessZ.append(round(Z[j],3))
-                accessXVel.append(round(XVel[j],3))
-                accessYVel.append(round(YVel[j],3))
-                accessZVel.append(round(ZVel[j],3))
-                accessRelSpeed.append(round(RelSpeed[j],3))
-        
-        ##Data provider de Link Information -> Prop Loss - EIRP - Rcvd. Frequency - Freq. Doppler Shift -
-        #                                       - Bandwidth Overlap - Rcvd. Iso. Power - Flux Density -
-        #                                       - g/T - C/No - Bandwidth - C/N - Spectral Flux Density -
-        #                                       - Eb/No - BER
-        LinkInfo                = access.DataProviders.Item('Link Information')
-        LinkInfo_TimeVar        = LinkInfo.QueryInterface(STKObjects.IAgDataPrvTimeVar)
-        LinkInfo_elements       = ['Prop Loss', 'EIRP', 'Rcvd. Frequency', 'Freq. Doppler Shift', 'Bandwidth Overlap','Rcvd. Iso. Power', 'Flux Density', 'g/T', 'C/No', 'Bandwidth', 'C/N', 'Spectral Flux Density', 'Eb/No','BER']
-        accessPropLoss          = []
-        accessEIRP              = []
-        accessRcvdFrequency     = []
-        accessFreqDopplerShift  = []
-        accessBandwidthOverlap  = []
-        accessRcvdIsoPower      = []
-        accessFluxDensity       = []
-        accessgT                = []
-        accessCNo               = []
-        accessBandwidth         = []
-        accessCN                = []
-        accessSpectralFluxDensity = []
-        accessEbNo              = []
-        accessBER               = []
-        for i in range(len(accessStartTime)):
-            LinkInfo_results        = LinkInfo_TimeVar.ExecElements(accessStartTime[i],accessStopTime[i],StepTime,LinkInfo_elements)
-            PropLoss = list(LinkInfo_results.DataSets.GetDataSetByName('Prop Loss').GetValues())
-            EIRP = list(LinkInfo_results.DataSets.GetDataSetByName('EIRP').GetValues())
-            RcvdFrequency = list(LinkInfo_results.DataSets.GetDataSetByName('Rcvd. Frequency').GetValues())
-            FreqDopplerShift = list(LinkInfo_results.DataSets.GetDataSetByName('Freq. Doppler Shift').GetValues())
-            BandwidthOverlap = list(LinkInfo_results.DataSets.GetDataSetByName('Bandwidth Overlap').GetValues())
-            RcvdIsoPower = list(LinkInfo_results.DataSets.GetDataSetByName('Rcvd. Iso. Power').GetValues())
-            FluxDensity = list(LinkInfo_results.DataSets.GetDataSetByName('Flux Density').GetValues())
-            gT = list(LinkInfo_results.DataSets.GetDataSetByName('g/T').GetValues())
-            CNo = list(LinkInfo_results.DataSets.GetDataSetByName('C/No').GetValues())
-            Bandwidth = list(LinkInfo_results.DataSets.GetDataSetByName('Bandwidth').GetValues())
-            CN = list(LinkInfo_results.DataSets.GetDataSetByName('C/N').GetValues())
-            SpectralFluxDensity = list(LinkInfo_results.DataSets.GetDataSetByName('Spectral Flux Density').GetValues())
-            EbNo = list(LinkInfo_results.DataSets.GetDataSetByName('Eb/No').GetValues())
-            BER = list(LinkInfo_results.DataSets.GetDataSetByName('BER').GetValues())
-            for j in range (len(BER)):
-                accessPropLoss.append(round(PropLoss[j],3))
-                accessEIRP.append(round(EIRP[j],3))
-                accessRcvdFrequency.append(round(RcvdFrequency[j],3))
-                accessFreqDopplerShift.append(round(FreqDopplerShift[j],3))
-                accessBandwidthOverlap.append(round(BandwidthOverlap[j],3))
-                accessRcvdIsoPower.append(round(RcvdIsoPower[j],3))
-                accessFluxDensity.append(round(FluxDensity[j],3))
-                accessgT.append(round(gT[j],3))
-                accessCNo.append(round(CNo[j],3))
-                accessBandwidth.append(round(Bandwidth[j],3))
-                accessCN.append(round(CN[j],3))
-                accessSpectralFluxDensity.append(round(SpectralFluxDensity[j],3))
-                accessEbNo.append(round(EbNo[j],3))
-                accessBER.append(round(BER[j],3))
-        
-        
-        
-        #receiverDP       = CBAreceiver_STKObj.DataProviders.Item('Basic Properties')
-        #receiverDP2      = receiverDP.QueryInterface(STKObjects.IAgDataPrvFixed)
-        #rptElements       = ['Cable Receiver - BER', 'Gain']
-        #receiverDPElements = receiverDP2.ExecElements(rptElements)
-        #receiverModulation = receiverDPElements.DataSets.GetDataSetByName('Cable Receiver - BER').GetValues()
-        #print(receiverModulation)
-        
-        BasicProperties         = CBAtransmitter_STKObj.DataProviders.Item('Basic Properties')
-        BasicProperties_PrvFixed= BasicProperties.QueryInterface(STKObjects.IAgDataPrvFixed)
-        BasicProperties_elements= ['Modulation Type']
-        BasicProperties_results = BasicProperties_PrvFixed.ExecElements(BasicProperties_elements)
-        Modulation             = BasicProperties_results.DataSets.GetDataSetByName('Modulation Type').GetValues()
-        #print(accessModulation)
-        
-        accessModulation        = []
-        accessAntAngle          = []
-        for i in range(len(accessTime)):
-            accessModulation.append(Dem)
-            accessAntAngle.append(ElvStr[angle])
-        
-        import pandas as pd
-        tabla = {
-        		   "Access Number": accessAccessNumber,
-        		   "Time": accessTime,
-                   "Modulation": accessModulation,
-                   "Angulo Antenna" : accessAntAngle,
-        		   "Azimuth": accessAzimuth,
-                   "Elevation": accessElevation,
-        		   "Range": accessRange,
-                   "x": accessX,
-                   "y": accessY,
-                   "z": accessZ,
-                   "xVel": accessXVel,
-                   "yVel": accessYVel,
-                   "zVel": accessZVel,
-                   "RelSpeed": accessRelSpeed,
-                   "Prop Loss": accessPropLoss,
-                   "EIRP": accessEIRP,
-                   "Rcvd. Frequency": accessRcvdFrequency,
-                   "Freq. Doppler Shift": accessFreqDopplerShift,
-                   "Bandwidth Overlap": accessBandwidthOverlap,
-                   "Rcvd. Iso. Power": accessRcvdIsoPower,
-                   "Flux Density": accessFluxDensity,
-                   "g/T": accessgT,
-                   "C/No": accessCNo,
-                   "Bandwidth": accessBandwidth,
-                   "C/N": accessCN,
-                   "Spectral Flux Density": accessSpectralFluxDensity,
-                   "Eb/No": accessEbNo,
-                   "BER": accessBER,          
-        }
-        
-        reporte = pd.DataFrame(tabla)
-        
-        reporte.to_csv("Reporte_"+Dem+"_"+ElvStr[angle]+".csv")
-        reporte.to_excel("Reporte_"+Dem+"_"+ElvStr[angle]+".xlsx")
+    import pandas as pd
+    tabla = {
+            	   "Access Number": accessAccessNumber,
+            	   'Time (UTCG)': accessTime,
+                   'Modulation': accessModulation,
+                   'Angulo Antenna' : accessAntAngle,
+            	   'Azimuth (deg)': accessAzimuth,
+                   'Elevation (deg)': accessElevation,
+            	   'Range (km)': accessRange,
+                   'x (km)': accessX,
+                   'y (km)': accessY,
+                   'z (km)': accessZ,
+                   'xVel (km/sec)': accessXVel,
+                   'yVel (km/sec)': accessYVel,
+                   'zVel (km/sec)': accessZVel,
+                   'RelSpeed (km/sec)': accessRelSpeed,
+                   'Prop Loss (dB)': accessPropLoss,
+                   'EIRP (dBW)': accessEIRP,
+                   'Rcvd. Frequency (GHz)': accessRcvdFrequency,
+                   'Freq. Doppler Shift (GHz)': accessFreqDopplerShift,
+                   'Bandwidth Overlap (dB)': accessBandwidthOverlap,
+                   'Rcvd. Iso. Power (dBW)': accessRcvdIsoPower,
+                   'Flux Density (dBW/m^2)': accessFluxDensity,
+                   'g/T (dB/K)': accessgT,
+                   'C/No (dB*MHz)': accessCNo,
+                   'Bandwidth (MHz)': accessBandwidth,
+                   'C/N (dB)': accessCN,
+                   'Spectral Flux Density (dBW*m^-2*Hz^-1)': accessSpectralFluxDensity,
+                   'Eb/No (dB)': accessEbNo,
+                   'BER': accessBER,          
+    }
+    
+    reporte = pd.DataFrame(tabla)
+    reporte.to_csv("Reporte_"+Dem+"_"+str(Elv)+".csv")
+    reporte.to_excel("Reporte_"+Dem+"_"+str(Elv)+".xlsx")
+   
