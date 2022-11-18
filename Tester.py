@@ -35,7 +35,7 @@ def get_promedio(array):
     return promedio
 
 DemOptions              = ['QPSK','8PSK','16PSK','QAM16','QAM32']
-ElvOptions              = [-65,-32.5,0,32,65.5]
+ElvOptions              = [-65,-32.5,0,32.5,65]
     
 def error_report(ReporteOriginal, ReporteCopia):
     for i in range(len(ReporteOriginal)):
@@ -125,8 +125,8 @@ def error_report(ReporteOriginal, ReporteCopia):
         }
                     
         reporte = pd.DataFrame(tabla)
-        reporte.to_csv("Error_8PSK_"+str(Elv)+".csv")
-        reporte.to_excel("Error_8PSK_"+str(Elv)+".xlsx")
+        reporte.to_csv("Error_QAM32_"+str(Elv)+".csv")
+        reporte.to_excel("Error_QAM32_"+str(Elv)+".xlsx")
 
 Reporte4PSK     = ["Reporte_QPSK_-65.csv","Reporte_QPSK_-32.5.csv","Reporte_QPSK_0.csv",
                   "Reporte_QPSK_32.5.csv","Reporte_QPSK_65.csv"]
@@ -142,6 +142,6 @@ ReportesMartin  = ["Degree-65 Facility-CordBS-Receiver-Receiver2-To-Satellite-Sa
                   "Degree-32_5 Facility-CordBS-Receiver-Receiver2-To-Satellite-Saocom-1-B-Transmitter-Transmitter3 paper-data-report.csv",
                   "Degree0 Facility-CordBS-Receiver-Receiver2-To-Satellite-Saocom-1-B-Transmitter-Transmitter3 paper-data-report.csv",
                   "Degree32_5 Facility-CordBS-Receiver-Receiver2-To-Satellite-Saocom-1-B-Transmitter-Transmitter3 paper-data-report.csv",
-                  "Degree65_Facility-CordBS-Receiver-Receiver2-To-Satellite-Saocom-1-B-Transmitter-Transmitter3 paper-data-report.csv"]
+                  "Degree65 Facility-CordBS-Receiver-Receiver2-To-Satellite-Saocom-1-B-Transmitter-Transmitter3 paper-data-report.csv"]
 
-error_report(Reporte8PSK,ReportesMartin)
+error_report(ReporteQAM32,ReportesMartin)
