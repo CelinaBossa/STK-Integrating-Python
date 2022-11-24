@@ -66,18 +66,24 @@ Elv                     = ElvOptions[0]
 # getAttAvailableRefAcex(SatelliteName)
 # setAttReferenceAxes(SatelliteName,referece)
 # setYPR(SatelliteName,Yaw,Pitch,Roll)
+# setSaMass(SatelliteName,Mass):
 #
 # ANTENNA
 # setDiameterAnt(SatelliteName, AntennaName, Diemater)
 # setFrecuencyAnt(SatelliteName,AntennaName,Frecuency)
 # setAzimuthElevation(SatelliteName,AntennaName,Azimuth,Elevation)
+#
+# TRANSMITTER
 # new_Transmitter(SatelliteName,TransmitterName)
+# setTraDemodulation(SatelliteName,TransmitterName, Demodulation):
+# setTraFrecuency(SatelliteName,TransmitterName, Frecuency):
+# setTraPower(SatelliteName,TransmitterName, Power)
+# setTraDataRate(SatelliteName,TransmitterName, Data_Rate):
 #-------------------------------------------------------------------------------
 
 ###############################################################################
 ##    Task 1
 ##    1. Set up your phyton workspace
-from win32api import GetSystemMetrics
 from comtypes.client import CreateObject
 
 ##    2. Get reference to running STK instance
@@ -93,7 +99,6 @@ root = uiApplication.Personality2
 # line for improved performance. 
 
 from comtypes.gen import STKObjects
-from comtypes.gen import STKUtil
 
 ######################################
 ##    Task 2
@@ -304,8 +309,8 @@ def single_report(Demodulation, Angle):
         for j in range (len(AccessNumber)):
             accessTime.append(Time[j])
             accessAccessNumber.append(AccessNumber[j])
-            accessAzimuth.append(round(Azimuth[j],6))
-            accessElevation.append(round(Elevation[j],6))
+            accessAzimuth.append(round(Azimuth[j],3))
+            accessElevation.append(round(Elevation[j],3))
             accessRange.append(round(Range[j],6))   
             
     ##Data provider de To Position Velocity -> ICRF -> x - y - z - xVel - yVel - zVel - RelSpeed
@@ -378,19 +383,19 @@ def single_report(Demodulation, Angle):
         EbNo = list(LinkInfo_results.DataSets.GetDataSetByName('Eb/No').GetValues())
         BER = list(LinkInfo_results.DataSets.GetDataSetByName('BER').GetValues())
         for j in range (len(BER)):
-            accessPropLoss.append(round(PropLoss[j],6))
-            accessEIRP.append(round(EIRP[j],6))
-            accessRcvdFrequency.append(round(RcvdFrequency[j],6))
-            accessFreqDopplerShift.append(round(FreqDopplerShift[j],6))
-            accessBandwidthOverlap.append(round(BandwidthOverlap[j],6))
-            accessRcvdIsoPower.append(round(RcvdIsoPower[j],6))
+            accessPropLoss.append(round(PropLoss[j],4))
+            accessEIRP.append(round(EIRP[j],3))
+            accessRcvdFrequency.append(round(RcvdFrequency[j],3))
+            accessFreqDopplerShift.append(round(FreqDopplerShift[j],3))
+            accessBandwidthOverlap.append(round(BandwidthOverlap[j],4))
+            accessRcvdIsoPower.append(round(RcvdIsoPower[j],3))
             accessFluxDensity.append(round(FluxDensity[j],6))
             accessgT.append(round(gT[j],6))
             accessCNo.append(round(CNo[j],6))
-            accessBandwidth.append(round(Bandwidth[j],6))
-            accessCN.append(round(CN[j],6))
+            accessBandwidth.append(round(Bandwidth[j],3))
+            accessCN.append(round(CN[j],4))
             accessSpectralFluxDensity.append(round(SpectralFluxDensity[j],6))
-            accessEbNo.append(round(EbNo[j],6))
+            accessEbNo.append(round(EbNo[j],4))
             accessBER.append(round(BER[j],6))
             
     accessModulation        = []
@@ -436,10 +441,13 @@ def single_report(Demodulation, Angle):
     reporte.to_excel("Reporte_"+Dem+"_"+str(Elv)+".xlsx")
     
 def change_time(InicialTime,FinalTime,StepTime):
-  scenario_ScObj.SetTimePeriod(InicialTime,FinalTime)
-  scenario_ScObj.Animation.AnimStepValue = StepTime
+  Sc_STKObj          = root.CurrentScenario
+  Sc_ScObj           = Sc_STKObj.QueryInterface(STKObjects.IAgScenario)
+  Sc_ScObj.SetTimePeriod(InicialTime,FinalTime)
+  Sc_ScObj.Animation.AnimStepValue = StepTime
   root.Rewind();    
-  
+
+
 def new_GdSta(Name,Lat,Lon,Alt):
   GdSta_STKObj              = root.CurrentScenario.Children.New(8, Name)
   GdSta_FaObj               = GdSta_STKObj.QueryInterface(STKObjects.IAgFacility)
@@ -545,13 +553,47 @@ def setAzimuthElevation(SatelliteName,AntennaName,Azimuth,Elevation):
   Ant_OrintObj.AssignAzEl(Azimuth, Elevation, 1)  # 1 represents Rotate About Boresight
   #'Value 0° = 1.27222e-14 °'
   
+def setSaMass(SatelliteName,Mass):
+  Sa_STKObj             = root.CurrentScenario.Children.Item(SatelliteName)
+  Sa_SaObj              = Sa_STKObj.QueryInterface(STKObjects.IAgSatellite)
+  SaMass                = Sa_SaObj.MassProperties
+  SaMass.Mass           = Mass  
+  
 def new_Transmitter(SatelliteName,TransmitterName):
   Sa_STKObj           = root.CurrentScenario.Children.Item(SatelliteName)
-  Tra_STKObj          = Sa_STKObj.Children.New(24, TransmitterName)
+  Sa_STKObj.Children.New(24, TransmitterName)
   
-#def setTraDemodulation(SatelliteName,TransmitterName, Demodulation):
-#  Sa_STKObj             = root.CurrentScenario.Children.Item(SatelliteName)
-#  Tra_STKObj            = Sa_STKObj.Children.Item(TransmitterName)
-#  Tra_TraObj            = Tra_STKObj.QueryInterface(STKObjects.IAgTransmitter)
-#  TxModel_ModObj     = Tra_TraObj.Model
-#  TxModel_CmxModObj.SetModulator(Demodulation)
+def setTraDemodulation(SatelliteName,TransmitterName, Demodulation):
+  Sa_STKObj             = root.CurrentScenario.Children.Item(SatelliteName)
+  Tra_STKObj            = Sa_STKObj.Children.Item(TransmitterName)
+  Tra_TraObj            = Tra_STKObj.QueryInterface(STKObjects.IAgTransmitter)
+  TxModel_ModObj        = Tra_TraObj.Model
+  TxModel_CmxModObj  = TxModel_ModObj.QueryInterface(STKObjects.IAgTransmitterModelComplex)
+  TxModel_CmxModObj.SetModulator(Demodulation)
+  print("Make sure you have change the Receiver's Demodulation too")
+  
+def setTraFrecuency(SatelliteName,TransmitterName, Frecuency):
+  Sa_STKObj             = root.CurrentScenario.Children.Item(SatelliteName)
+  Tra_STKObj            = Sa_STKObj.Children.Item(TransmitterName)
+  Tra_TraObj            = Tra_STKObj.QueryInterface(STKObjects.IAgTransmitter)
+  TxModel_ModObj        = Tra_TraObj.Model
+  TxModel_CmxModObj  = TxModel_ModObj.QueryInterface(STKObjects.IAgTransmitterModelComplex)
+  TxModel_CmxModObj.Frequency = Frecuency # GHz
+  
+def setTraPower(SatelliteName,TransmitterName, Power):
+  Sa_STKObj             = root.CurrentScenario.Children.Item(SatelliteName)
+  Tra_STKObj            = Sa_STKObj.Children.Item(TransmitterName)
+  Tra_TraObj            = Tra_STKObj.QueryInterface(STKObjects.IAgTransmitter)
+  TxModel_ModObj        = Tra_TraObj.Model
+  TxModel_CmxModObj  = TxModel_ModObj.QueryInterface(STKObjects.IAgTransmitterModelComplex)
+  TxModel_CmxModObj.Power = Power # dBW
+  
+def setTraDataRate(SatelliteName,TransmitterName, Data_Rate):
+  Sa_STKObj             = root.CurrentScenario.Children.Item(SatelliteName)
+  Tra_STKObj            = Sa_STKObj.Children.Item(TransmitterName)
+  Tra_TraObj            = Tra_STKObj.QueryInterface(STKObjects.IAgTransmitter)
+  TxModel_ModObj        = Tra_TraObj.Model
+  TxModel_CmxModObj  = TxModel_ModObj.QueryInterface(STKObjects.IAgTransmitterModelComplex)
+  TxModel_CmxModObj.DataRate = Data_Rate # Mb/sec
+  print("Make sure that you select the demodulation you want")
+  
