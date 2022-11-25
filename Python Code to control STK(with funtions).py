@@ -247,6 +247,7 @@ CBAtxModel_CmxModObj.AntennaControl.LinkedAntennaObject
 SAOCOMmass                  = SAOCOMsa_SaObj.MassProperties
 SAOCOMmass.Mass             = 0.00100000
 
+
 print('The Configuration is Done. Please upload the TLE')
 
 def report():
@@ -570,6 +571,17 @@ def setTraDemodulation(SatelliteName,TransmitterName, Demodulation):
   TxModel_ModObj        = Tra_TraObj.Model
   TxModel_CmxModObj  = TxModel_ModObj.QueryInterface(STKObjects.IAgTransmitterModelComplex)
   TxModel_CmxModObj.SetModulator(Demodulation)
+  if Demodulation == DemOptions[0]:
+        DataRate = DataRateOptions[0]
+  elif Demodulation == DemOptions[1]:
+        DataRate = DataRateOptions[1]
+  elif Demodulation ==  DemOptions[2]:
+        DataRate = DataRateOptions[2]
+  elif Demodulation ==  DemOptions[3]:
+        DataRate = DataRateOptions[3]
+  elif Demodulation ==  DemOptions[4]:
+        DataRate = DataRateOptions[4]
+  CBAtxModel_CmxModObj.DataRate = DataRate  # Mb/sec
   print("Make sure you have change the Receiver's Demodulation too")
   
 def setTraFrecuency(SatelliteName,TransmitterName, Frecuency):
@@ -597,3 +609,67 @@ def setTraDataRate(SatelliteName,TransmitterName, Data_Rate):
   TxModel_CmxModObj.DataRate = Data_Rate # Mb/sec
   print("Make sure that you select the demodulation you want")
   
+def getAccessTimeData(ReferenceObject, ObjectToAccess,element):
+#  element = ['Start Time','Stop Time']
+  access = CBArec_STKObj.GetAccessToObject(CBAtra_STKObj)
+  access.ComputeAccess()
+  AccessData            = access.DataProviders.Item('Access Data')
+  AccessData_ProvG      = AccessData.QueryInterface(STKObjects.IAgDataPrvInterval)
+  AccessData_results    = AccessData_ProvG.Exec(scenario_ScObj.StartTime, scenario_ScObj.StopTime)
+  accessTime            = AccessData_results.DataSets.GetDataSetByName(element).GetValues()
+  return accessTime
+
+def getTmData(ReferenceObject, ObjectToAccess,ItemName,GroupName,StartTime,StopTime,StepTime,element):
+  access = ReferenceObject.GetAccessToObject(ObjectToAccess)
+  access.ComputeAccess()
+  Item              = access.DataProviders.Item(ItemName)
+  if GroupName != None:
+    GroupObj    = Item.QueryInterface(STKObjects.IAgDataProviderGroup)
+    DataObj     = GroupObj.Group
+    Item  = DataObj.Item(GroupName)
+  TimeVar           = Item.QueryInterface(STKObjects.IAgDataPrvTimeVar)
+  Elements          = [element]
+  Results           = TimeVar.ExecElements(StartTime,StopTime,StepTime,Elements)
+  Data              = list(Results.DataSets.GetDataSetByName(element).GetValues())
+  return Data
+
+def getTmIntervals(ReferenceObject, ObjectToAccess,StartTime,StopTime,StepTime):
+  Time = getTmData(ReferenceObject,ObjectToAccess,'AER Data','Default',StartTime,StopTime,StepTime,'Time')
+  return Time
+
+def getTmRealData(ReferenceObject, ObjectToAccess,ItemName,GroupName,StartTime,StopTime,StepTime,elements):
+  DataList = []
+  for i in range(len(elements)):
+    element = elements[i]
+    Data = getTmData(ReferenceObject, ObjectToAccess,ItemName,GroupName,StartTime,StopTime,StepTime,element)
+    TmREalData = round(Data[0],3)
+    DataList.append(TmREalData)
+  return DataList
+
+def getStaticData(ReferenceObject,ItemName,GroupName,element):
+  Item                  = ReferenceObject.DataProviders.Item(ItemName)
+  if GroupName != None:
+    GroupObj    = Item.QueryInterface(STKObjects.IAgDataProviderGroup)
+    DataObj     = GroupObj.Group
+    Item        = DataObj.Item(GroupName)
+  DataPrvFixed          = Item.QueryInterface(STKObjects.IAgDataPrvFixed)
+  Elements              = [element]
+  Results               = DataPrvFixed.ExecElements(Elements)
+  Data                  = list(Results.DataSets.GetDataSetByName(element).GetValues())
+  return Data
+
+def Step(ReferenceObject, ObjectToAccess,ItemNameList,GroupNameList,StartTime,StopTime,
+         StepTime,elementsList,SatelliteName,TransmitterName,FacilityName,
+         ReceptorName,AntennaName,Demodulation,Angle,Azimuth):
+  setAzimuthElevation(SatelliteName,AntennaName,Azimuth,Angle) #Cambio angulo
+  setTraDemodulation(SatelliteName,TransmitterName, Demodulation)
+  setRecDemodulation(FacilityName,ReceptorName, Demodulation)
+  Data = []
+  for i in range(len(ItemNameList)):
+    ItemName = ItemNameList[i]
+    GroupName = GroupNameList[i]
+    elements = elementsList[i]
+    DataList = getTmRealData(ReferenceObject, ObjectToAccess,ItemName,GroupName,StartTime,StopTime,StepTime,elements)
+    for j in range(len(DataList)):
+      Data.append(DataList[j])
+  return Data
