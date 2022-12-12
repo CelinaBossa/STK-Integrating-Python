@@ -51,6 +51,7 @@ Elv                     = ElvOptions[0]
 #
 # SCENARIO
 # change_time(InicialTime,FinalTime,StepTime)
+# change_units(Variable,Unit)
 #
 # GROUND STATION
 # new_GdSta(Name,Lat,Lon,Alt)
@@ -133,8 +134,6 @@ CBAGdSta_FaObj.Position.AssignGeodetic(CBA_GdStaLat, CBA_GdStaLon, CBA_GdStaAlt)
 ## POLAR'S GROUND STATION
 POLARGdSta_STKObj = root.CurrentScenario.Children.New(8, POLAR_GdStaName)
 POLARGdSta_FaObj = POLARGdSta_STKObj.QueryInterface(STKObjects.IAgFacility)
-root.UnitPreferences.Item('LatitudeUnit').SetCurrentUnit('deg')
-root.UnitPreferences.Item('LongitudeUnit').SetCurrentUnit('deg')
 POLARGdSta_FaObj.UseTerrain = True
 POLARGdSta_FaObj.Position.AssignGeodetic(POLAR_GdStaLat, POLAR_GdStaLon, POLAR_GdStaAlt)
 
@@ -446,7 +445,10 @@ def change_time(InicialTime,FinalTime,StepTime):
   Sc_ScObj           = Sc_STKObj.QueryInterface(STKObjects.IAgScenario)
   Sc_ScObj.SetTimePeriod(InicialTime,FinalTime)
   Sc_ScObj.Animation.AnimStepValue = StepTime
-  root.Rewind();    
+  root.Rewind();  
+
+def change_units(Variable,Unit):
+    root.UnitPreferences.Item(Variable).SetCurrentUnit(Unit)
 
 
 def new_GdSta(Name,Lat,Lon,Alt):
